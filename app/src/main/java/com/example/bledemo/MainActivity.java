@@ -12,7 +12,7 @@ import android.os.Bundle;
 import com.example.bledemo.adapters.BluetoothDeviceListAdapter;
 import com.example.bledemo.ble.BLEManager;
 import com.example.bledemo.ble.BLEManagerCallerInterface;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.NonNull;
@@ -37,6 +37,15 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.start_stop_scan_button);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(bleManager!=null){
+                    bleManager.scanDevices();
+                }
+            }
+        });
 
         bleManager=new BLEManager(this,this);
         if(!bleManager.isBluetoothOn()){
