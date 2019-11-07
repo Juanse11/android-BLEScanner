@@ -12,7 +12,7 @@ import android.os.Bundle;
 import com.example.bledemo.adapters.BluetoothDeviceListAdapter;
 import com.example.bledemo.ble.BLEManager;
 import com.example.bledemo.ble.BLEManagerCallerInterface;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.NonNull;
@@ -37,10 +37,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = findViewById(R.id.fab);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.start_stop_scan_button);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -49,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                 }
             }
         });
+
         bleManager=new BLEManager(this,this);
         if(!bleManager.isBluetoothOn()){
             bleManager.RequestBluetoothDeviceEnable(this);
@@ -72,10 +70,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+        //noinspec
 
         return super.onOptionsItemSelected(item);
     }
