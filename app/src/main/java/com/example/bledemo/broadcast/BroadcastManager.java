@@ -1,9 +1,21 @@
 package com.example.bledemo.broadcast;
 
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+
+import androidx.appcompat.app.AlertDialog;
+
+import com.example.bledemo.R;
 
 public class BroadcastManager extends BroadcastReceiver {
 
@@ -58,4 +70,7 @@ public class BroadcastManager extends BroadcastReceiver {
             caller.ErrorAtBroadcastManager(error);
         }
     }
+
+
+
 }

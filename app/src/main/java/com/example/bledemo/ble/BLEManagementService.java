@@ -1,13 +1,14 @@
 package com.example.bledemo.ble;
 
 import android.app.IntentService;
+import android.bluetooth.BluetoothGattService;
 import android.content.Intent;
 import android.widget.Toast;
 
 import com.example.bledemo.broadcast.BroadcastManager;
 import com.example.bledemo.broadcast.BroadcastManagerCallerInterface;
 
-import org.json.JSONObject;
+import java.util.List;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -16,10 +17,11 @@ import org.json.JSONObject;
  * TODO: Customize class - update intent actions, extra parameters and static
  * helper methods.
  */
-public class BLEManagementService extends IntentService implements BroadcastManagerCallerInterface {
+public class BLEManagementService extends IntentService implements BroadcastManagerCallerInterface, BLEManagerCallerInterface {
 
     BroadcastManager broadcastManager;
-    public static String SOCKET_SERVICE_CHANNEL="com.example.myfirstapplication.SOCKET_SERVICE_CHANNEL";
+    BLEManager bleManager;
+    public static String BLE_SERVICE_CHANNEL="com.example.bledemo.SOCKET_SERVICE_CHANNEL";
     public static String SERVER_TO_CLIENT_MESSAGE="SERVER_TO_CLIENT_MESSAGE";
     public static String CLIENT_TO_SERVER_MESSAGE="CLIENT_TO_SERVER_MESSAGE";
     public static String USER_CONNECTED="USER_CONNECTED";
@@ -34,29 +36,21 @@ public class BLEManagementService extends IntentService implements BroadcastMana
     private static final String ACTION_BAZ = "com.example.myfirstapplication.network.action.BAZ";
 
     // TODO: Rename parameters
-    private String SERVER_HOST = "172.17.9.21";
-    private int SERVER_PORT = 9090;
+    //private String SERVER_HOST = "172.17.9.21";
+    //private int SERVER_PORT = 9090;
 
 
     public BLEManagementService() {
-        super("SocketManagementService");
+        super("BLEManagementService");
     }
-
-
-
-
-
 
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_CONNECT.equals(action)) {
-                SERVER_HOST = intent.getStringExtra("SERVER_HOST");
-                SERVER_PORT = intent.getIntExtra("SERVER_PORT",9090);
-
                 initializeBroadcastManager();
-
+                initializeBLEManager();
             }
 
         }
@@ -86,11 +80,21 @@ public class BLEManagementService extends IntentService implements BroadcastMana
             if(broadcastManager==null){
                 broadcastManager=new BroadcastManager(
                         getApplicationContext(),
-                        SOCKET_SERVICE_CHANNEL,
+                        BLE_SERVICE_CHANNEL,
                         this);
             }
         }catch (Exception error){
             Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void initializeBLEManager() {
+        try{
+            if(bleManager == null){
+                bleManager = new BLEManager(this,this);
+            }
+        }catch(Exception e){
+            Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();
         }
     }
 
@@ -120,5 +124,30 @@ public class BLEManagementService extends IntentService implements BroadcastMana
         }
         broadcastManager=null;
         super.onDestroy();
+    }
+
+    @Override
+    public void scanStartedSuccessfully() {
+
+    }
+
+    @Override
+    public void scanStoped() {
+
+    }
+
+    @Override
+    public void scanFailed(int error) {
+
+    }
+
+    @Override
+    public void newDeviceDetected() {
+
+    }
+
+    @Override
+    public void servicesDiscovered(List<BluetoothGattService> services) {
+
     }
 }

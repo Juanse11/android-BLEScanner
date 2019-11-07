@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         });
         bleManager=new BLEManager(this,this);
         if(!bleManager.isBluetoothOn()){
-            bleManager.enableBluetoothDevice(this, 1001);
+            bleManager.RequestBluetoothDeviceEnable(this);
         }else{
             bleManager.requestLocationPermissions(this,1002);
         }
@@ -112,7 +112,6 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         try{
-
             if(requestCode==1001){
                 if(resultCode!=Activity.RESULT_OK){
 
@@ -121,7 +120,6 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
                 }
             }
-
 
         }catch (Exception error){
 

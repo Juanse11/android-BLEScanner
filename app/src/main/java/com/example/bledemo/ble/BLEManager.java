@@ -39,14 +39,14 @@ public class BLEManager extends ScanCallback{
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
     public List<ScanResult> scanResults=new ArrayList<>();
+    static int REQUEST_BLUETOOTH_PERMISSION_NEEDED = 1001;
+    private BluetoothGatt lastBluetoothGatt;
 
     public BLEManager(BLEManagerCallerInterface caller, Context context) {
         this.caller = caller;
         this.context = context;
         initializeBluetoothManager();
     }
-
-
 
     public void initializeBluetoothManager(){
         try{
@@ -113,18 +113,6 @@ public class BLEManager extends ScanCallback{
 
     }
 
-    public void enableBluetoothDevice(Activity activity,int REQUEST_ENABLE_BT){
-        try{
-            if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            }
-        }catch (Exception error){
-
-        }
-    }
-
-
 
     public void scanDevices(){
         try{
@@ -135,6 +123,111 @@ public class BLEManager extends ScanCallback{
         }catch (Exception error){
 
         }
+    }
+
+    public static boolean CheckIfBLEIsSupportedOrNot(Context context){
+        try {
+            if (!context.getPackageManager().
+                    hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                return false;
+            }
+            return true;
+        }catch (Exception error){
+
+        }
+        return false;
+    }
+
+    public static boolean RequestBluetoothDeviceEnable(final Activity activity){
+        try{
+            BluetoothManager bluetoothManager=(BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
+            BluetoothAdapter bluetoothAdapter=bluetoothManager.getAdapter();
+            if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
+                androidx.appcompat.app.AlertDialog.Builder builder=new androidx.appcompat.app.AlertDialog.Builder(activity)
+                        .setTitle("Bluetooth")
+                        .setMessage("The bluetooth device must be enabled in order to connect the device")
+                        .setIcon(R.mipmap.ic_launcher)
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                                activity.startActivityForResult(enableBtIntent, REQUEST_BLUETOOTH_PERMISSION_NEEDED);
+                            }
+                        });
+                builder.show();
+
+            }else {
+                return true;
+            }
+        }catch (Exception error){
+
+        }
+        return false;
+    }
+
+    //How to know if a characteristic can be read, written, or can notify
+    public boolean isCharacteristicWriteable(BluetoothGattCharacteristic characteristic) {
+        return (characteristic.getProperties() &
+                (BluetoothGattCharacteristic.PROPERTY_WRITE
+                        | BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)) != 0;
+    }
+
+    public boolean isCharacteristicReadable(BluetoothGattCharacteristic characteristic) {
+        return ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_READ) != 0);
+    }
+
+    public boolean isCharacteristicNotifiable(BluetoothGattCharacteristic characteristic) {
+        return ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0);
+    }
+
+    private void searchAndSetAllNotifyAbleCharacteristics() {
+        try {
+            if(lastBluetoothGatt!=null){
+                for(BluetoothGattService currentService: lastBluetoothGatt.getServices()){
+                    if(currentService!=null){
+                        for(BluetoothGattCharacteristic currentCharacteristic:currentService.getCharacteristics()){
+                            if(currentCharacteristic!=null){
+                                if(isCharacteristicNotifiable(currentCharacteristic)){
+                                    lastBluetoothGatt.setCharacteristicNotification(currentCharacteristic, true);
+                                    for(BluetoothGattDescriptor currentDescriptor:currentCharacteristic.getDescriptors()){
+                                        if(currentDescriptor!=null){
+                                            try {
+                                                currentDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                                                lastBluetoothGatt.writeDescriptor(currentDescriptor);
+                                            }catch (Exception internalError){
+
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception error){
+
+        }
+    }
+
+    public boolean readCharacteristic(BluetoothGattCharacteristic characteristic){
+        try{
+            if(characteristic==null) return false;
+            return lastBluetoothGatt.readCharacteristic(characteristic);
+        }catch (Exception error){
+        }
+        return false;
+    }
+
+    public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic,byte[] data){
+        try{
+            if(characteristic==null) return false;
+            characteristic.setValue(data);
+            return lastBluetoothGatt.writeCharacteristic(characteristic);
+        }catch (Exception error){
+        }
+        return false;
     }
 
     @Override
