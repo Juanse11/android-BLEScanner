@@ -37,18 +37,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(bleManager!=null){
-                    bleManager.scanDevices();
-                }
-            }
-        });
         bleManager=new BLEManager(this,this);
         if(!bleManager.isBluetoothOn()){
             bleManager.enableBluetoothDevice(this, 1001);
@@ -72,10 +61,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+        //noinspec
 
         return super.onOptionsItemSelected(item);
     }
