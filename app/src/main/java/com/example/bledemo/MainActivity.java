@@ -12,14 +12,20 @@ import android.os.Bundle;
 import com.example.bledemo.adapters.BluetoothDeviceListAdapter;
 import com.example.bledemo.ble.BLEManager;
 import com.example.bledemo.ble.BLEManagerCallerInterface;
+import com.example.bledemo.fragments.HomeFragment;
+import com.example.bledemo.fragments.LogFragment;
 import com.getbase.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,11 +38,17 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     public BLEManager bleManager;
     private MainActivity mainActivity;
+    final Fragment fragment1 = new HomeFragment();
+    final Fragment fragment2 = new LogFragment();
+    final FragmentManager fm =getSupportFragmentManager();
+    Fragment active = fragment1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        fm.beginTransaction().add(R.id.main_container, fragment2, "2").hide(fragment2).commit();
+        fm.beginTransaction().add(R.id.main_container, fragment1, "1").commit();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.start_stop_scan_button);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -44,6 +56,27 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                 if(bleManager!=null){
                     bleManager.scanDevices();
                 }
+            }
+        });
+
+        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        navigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_home:
+                        fm.beginTransaction().hide(active).show(fragment1).commit();
+                        active = fragment1;
+                        return true;
+
+                    case R.id.action_log:
+                        fm.beginTransaction().hide(active).show(fragment2).commit();
+                        active = fragment2;
+                        return true;
+
+                }
+                return false;
             }
         });
 
@@ -74,6 +107,8 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
         return super.onOptionsItemSelected(item);
     }
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
