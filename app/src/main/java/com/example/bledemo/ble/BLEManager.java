@@ -338,7 +338,7 @@ public class BLEManager extends ScanCallback{
                 public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
                     super.onMtuChanged(gatt, mtu, status);
                 }
-            });
+            },BluetoothDevice.TRANSPORT_LE);
         }catch (Exception error){
 
         }

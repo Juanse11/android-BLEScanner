@@ -12,8 +12,10 @@ import android.os.Bundle;
 import com.example.bledemo.adapters.BluetoothDeviceListAdapter;
 import com.example.bledemo.ble.BLEManager;
 import com.example.bledemo.ble.BLEManagerCallerInterface;
+import com.example.bledemo.fragments.DeviceDetailFragment;
 import com.example.bledemo.fragments.HomeFragment;
 import com.example.bledemo.fragments.LogFragment;
+import com.example.bledemo.fragments.OnDeviceSelectedInterface;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -24,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.util.Log;
 import android.view.View;
@@ -34,13 +37,13 @@ import android.widget.Toast;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements BLEManagerCallerInterface {
+public class MainActivity extends AppCompatActivity implements BLEManagerCallerInterface, OnDeviceSelectedInterface {
 
     public BLEManager bleManager;
     private MainActivity mainActivity;
     final Fragment fragment1 = new HomeFragment();
     final Fragment fragment2 = new LogFragment();
-    final FragmentManager fm =getSupportFragmentManager();
+    final FragmentManager fm = getSupportFragmentManager();
     Fragment active = fragment1;
 
     @Override
@@ -53,7 +56,8 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(bleManager!=null){
+                if (bleManager != null) {
+                    Log.d("VM", "scanning started");
                     bleManager.scanDevices();
                 }
             }
@@ -80,13 +84,13 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             }
         });
 
-        bleManager=new BLEManager(this,this);
-        if(!bleManager.isBluetoothOn()){
+        bleManager = new BLEManager(this, this);
+        if (!bleManager.isBluetoothOn()) {
             bleManager.RequestBluetoothDeviceEnable(this);
-        }else{
-            bleManager.requestLocationPermissions(this,1002);
+        } else {
+            bleManager.requestLocationPermissions(this, 1002);
         }
-        mainActivity=this;
+        mainActivity = this;
     }
 
     @Override
@@ -109,22 +113,21 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     }
 
 
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        boolean allPermissionsGranted=true;
+        boolean allPermissionsGranted = true;
         if (requestCode == 1002) {
-            for (int currentResult:grantResults
+            for (int currentResult : grantResults
             ) {
-                if(currentResult!= PackageManager.PERMISSION_GRANTED){
-                    allPermissionsGranted=false;
+                if (currentResult != PackageManager.PERMISSION_GRANTED) {
+                    allPermissionsGranted = false;
                     break;
                 }
             }
-            if(!allPermissionsGranted){
-                AlertDialog.Builder builder=new AlertDialog.Builder(this)
+            if (!allPermissionsGranted) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this)
                         .setTitle("Permissions")
                         .setMessage("Camera and Location permissions must be granted in order to execute the app")
                         .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -141,17 +144,17 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        try{
-            if(requestCode==1001){
-                if(resultCode!=Activity.RESULT_OK){
+        try {
+            if (requestCode == 1001) {
+                if (resultCode != Activity.RESULT_OK) {
 
-                }else{
-                    bleManager.requestLocationPermissions(this,1002);
+                } else {
+                    bleManager.requestLocationPermissions(this, 1002);
 
                 }
             }
 
-        }catch (Exception error){
+        } catch (Exception error) {
 
         }
     }
@@ -176,12 +179,12 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                try{
-                    ListView listView=(ListView)findViewById(R.id.devices_list_id);
-                    BluetoothDeviceListAdapter adapter=new BluetoothDeviceListAdapter(getApplicationContext(),bleManager.scanResults,mainActivity);
+                try {
+                    ListView listView = (ListView) findViewById(R.id.devices_list_id);
+                    BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), bleManager.scanResults, mainActivity);
                     listView.setAdapter(adapter);
 
-                }catch (Exception error){
+                } catch (Exception error) {
 
                 }
 
@@ -196,9 +199,9 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                for (BluetoothGattService s: services) {
+                for (BluetoothGattService s : services) {
                     List<BluetoothGattCharacteristic> bluetoothGattCharacteristics = s.getCharacteristics();
-                    for (BluetoothGattCharacteristic c: bluetoothGattCharacteristics) {
+                    for (BluetoothGattCharacteristic c : bluetoothGattCharacteristics) {
 
                     }
                 }
@@ -208,4 +211,24 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     }
 
+    @Override
+    public void onDeviceSelected(int id) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentById(R.id.device_detail_fragment);
+
+                Fragment newFragment = new DeviceDetailFragment();
+                Bundle args = new Bundle();
+                args.putInt("argumentPosition", 2);
+                newFragment.setArguments(args);
+
+                FragmentTransaction transaction = fm.beginTransaction();
+                transaction.replace(R.id.main_container,newFragment);
+                transaction.addToBackStack(null);
+                transaction.commit();
+                active = newFragment;
+            }
+        });
+    }
 }
