@@ -12,7 +12,9 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom">
 
         <com.getbase.floatingactionbutton.FloatingActionsMenu
             android:id="@+id/multiple_actions_left"
@@ -38,19 +40,19 @@
                 android:id="@+id/start_stop_scan_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:fab_icon="@drawable/ic_bluetooth_searching_24px"
-                app:fab_size="mini"
                 app:fab_colorNormal="@color/colorSecondary"
                 app:fab_colorPressed="@color/colorSecondary"
+                app:fab_icon="@drawable/ic_bluetooth_searching_24px"
+                app:fab_size="mini"
                 app:fab_title="Start/Stop Scan" />
 
 
             <com.getbase.floatingactionbutton.FloatingActionButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:fab_icon="@drawable/ic_bluetooth_disabled_24px"
                 app:fab_colorNormal="@color/colorSecondary"
                 app:fab_colorPressed="@color/colorSecondary"
+                app:fab_icon="@drawable/ic_bluetooth_disabled_24px"
                 app:fab_size="mini"
                 app:fab_title="Disconnect Device" />
 

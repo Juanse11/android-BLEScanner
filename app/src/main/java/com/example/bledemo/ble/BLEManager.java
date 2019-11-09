@@ -234,8 +234,8 @@ public class BLEManager extends ScanCallback{
     public void onScanResult(int callbackType, ScanResult result) {
         if(!isResultAlreadyAtList(result)) {
             scanResults.add(result);
+            caller.newDeviceDetected();
         }
-        caller.newDeviceDetected();
 
     }
 

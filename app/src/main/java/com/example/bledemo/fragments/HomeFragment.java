@@ -17,7 +17,7 @@ import com.example.bledemo.R;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class HomeFragment extends Fragment implements OnDeviceSelectedInterface{
+public class HomeFragment extends Fragment{
 
     OnDeviceSelectedInterface caller;
     public HomeFragment() {
@@ -45,8 +45,4 @@ public class HomeFragment extends Fragment implements OnDeviceSelectedInterface{
         });
     }
 
-    @Override
-    public void onDeviceSelected(int id) {
-
-    }
 }
