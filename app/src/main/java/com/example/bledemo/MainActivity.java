@@ -50,8 +50,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        fm.beginTransaction().add(R.id.main_container, fragment2, "2").hide(fragment2).commit();
-        fm.beginTransaction().add(R.id.main_container, fragment1, "1").commit();
+        fm.beginTransaction().replace(R.id.main_container, fragment1).commit();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.start_stop_scan_button);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -70,12 +69,12 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.action_home:
-                        fm.beginTransaction().hide(active).show(fragment1).commit();
+                        fm.beginTransaction().replace(R.id.main_container,fragment1).commit();
                         active = fragment1;
                         return true;
 
                     case R.id.action_log:
-                        fm.beginTransaction().hide(active).show(fragment2).commit();
+                        fm.beginTransaction().replace(R.id.main_container,fragment2).commit();
                         active = fragment2;
                         return true;
 
