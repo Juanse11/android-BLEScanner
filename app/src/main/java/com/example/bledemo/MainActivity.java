@@ -2,7 +2,9 @@ package com.example.bledemo;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     final Fragment fragment2 = new LogFragment();
     final FragmentManager fm = getSupportFragmentManager();
     Fragment active = fragment1;
+    private BluetoothGatt lastBluetoothGatt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,12 +72,12 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.action_home:
-                        fm.beginTransaction().replace(R.id.main_container,fragment1).commit();
+                        fm.beginTransaction().replace(R.id.main_container, fragment1).commit();
                         active = fragment1;
                         return true;
 
                     case R.id.action_log:
-                        fm.beginTransaction().replace(R.id.main_container,fragment2).commit();
+                        fm.beginTransaction().replace(R.id.main_container, fragment2).commit();
                         active = fragment2;
                         return true;
 
@@ -180,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             public void run() {
                 try {
                     ListView listView = (ListView) findViewById(R.id.devices_list_id);
-                    BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), bleManager.scanResults, mainActivity);
+                    BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), bleManager.scanResults, mainActivity,mainActivity);
                     listView.setAdapter(adapter);
 
                 } catch (Exception error) {
@@ -194,40 +197,52 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     }
 
     @Override
-    public void servicesDiscovered(final List<BluetoothGattService> services) {
+    public void servicesDiscovered(final BluetoothGatt bg) {
+        this.lastBluetoothGatt = bg;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                for (BluetoothGattService s : services) {
-                    List<BluetoothGattCharacteristic> bluetoothGattCharacteristics = s.getCharacteristics();
-                    for (BluetoothGattCharacteristic c : bluetoothGattCharacteristics) {
-
-                    }
-                }
-                Toast.makeText(mainActivity, services.toArray().toString(), Toast.LENGTH_LONG).show();
+                DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentByTag("device");
+                deviceDetailFragment.initListData(bg.getServices());
             }
         });
 
     }
 
     @Override
-    public void onDeviceSelected(int id) {
+    public void characteristicChanged(final String bc) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentById(R.id.device_detail_fragment);
+                Toast.makeText(mainActivity, ""+bc, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
+    @Override
+    public void onDeviceSelected(final String address, final String name) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
                 Fragment newFragment = new DeviceDetailFragment();
                 Bundle args = new Bundle();
-                args.putInt("argumentPosition", 2);
+                args.putString("deviceAddress", address);
+                args.putString("deviceName", name);
+
                 newFragment.setArguments(args);
 
                 FragmentTransaction transaction = fm.beginTransaction();
-                transaction.replace(R.id.main_container,newFragment);
+                transaction.hide(active);
+                transaction.add(R.id.main_container, newFragment, "device");
                 transaction.addToBackStack(null);
                 transaction.commit();
                 active = newFragment;
             }
         });
+    }
+
+    @Override
+    public void connectToGatServer(String address) {
+        bleManager.connectToGATTServer(mainActivity.bleManager.getByAddress(address));
     }
 }

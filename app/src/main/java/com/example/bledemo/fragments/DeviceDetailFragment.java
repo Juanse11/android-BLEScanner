@@ -2,6 +2,7 @@ package com.example.bledemo.fragments;
 
 
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -12,8 +13,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.bledemo.MainActivity;
 import com.example.bledemo.R;
 import com.example.bledemo.adapters.ExpandableListViewAdapter;
 
@@ -29,9 +32,10 @@ public class DeviceDetailFragment extends Fragment {
 
     private ExpandableListViewAdapter expandableListViewAdapter;
 
-    private List<String> listDataGroup;
-
-    private HashMap<String, List<BluetoothGattCharacteristic>> listDataChild;
+    private List<BluetoothGattService> listDataGroup;
+    private String address;
+    private String deviceName;
+    private HashMap<BluetoothGattService, List<BluetoothGattCharacteristic>> listDataChild;
 
     public DeviceDetailFragment() {
         // Required empty public constructor
@@ -49,18 +53,23 @@ public class DeviceDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         initViews();
-
         initObjects();
-
-        initListData();
+        address = getArguments().getString("deviceAddress");
+        ((MainActivity) getActivity()).connectToGatServer(address);
+        deviceName = getArguments().getString("deviceName");
     }
 
     /**
      * method to initialize the views
      */
     private void initViews() {
-
+        address = getArguments().getString("deviceAddress");
+        deviceName = getArguments().getString("deviceName");
         expandableListView = getView().findViewById(R.id.expandableListView);
+        TextView deviceNameTextView = getView().findViewById(R.id.device_name_text_view);
+        deviceNameTextView.setText(deviceName);
+        TextView deviceAddressTextView = getView().findViewById(R.id.device_address_text_view);
+        deviceAddressTextView.setText(address);
 
     }
 
@@ -113,16 +122,8 @@ public class DeviceDetailFragment extends Fragment {
     }
 
 
-    private void initListData() {
-
-
-        listDataGroup.add("Test Service");
-        listDataGroup.add("Test Service 1");
-        listDataGroup.add("Test Service 2" );
-        listDataGroup.add("Test Service 3");
-
-        String[] array;
-
+    public void initListData(List<BluetoothGattService> services ) {
+        listDataGroup.addAll(services);
         expandableListViewAdapter.notifyDataSetChanged();
     }
 }

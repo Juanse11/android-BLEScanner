@@ -1,6 +1,8 @@
 package com.example.bledemo.ble;
 
 import android.app.IntentService;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Intent;
 import android.widget.Toast;
@@ -147,7 +149,13 @@ public class BLEManagementService extends IntentService implements BroadcastMana
     }
 
     @Override
-    public void servicesDiscovered(List<BluetoothGattService> services) {
+    public void servicesDiscovered(BluetoothGatt bg) {
 
     }
+
+    @Override
+    public void characteristicChanged(String bc) {
+
+    }
+
 }

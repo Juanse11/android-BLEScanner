@@ -36,13 +36,7 @@ public class HomeFragment extends Fragment{
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        caller = (OnDeviceSelectedInterface) getContext();
-        view.findViewById(R.id.item_test).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                 caller.onDeviceSelected(123);
-            }
-        });
+
     }
 
 }

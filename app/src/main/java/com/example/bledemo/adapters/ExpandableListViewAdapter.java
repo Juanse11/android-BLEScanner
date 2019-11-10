@@ -1,6 +1,7 @@
 package com.example.bledemo.adapters;
 
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
@@ -21,13 +22,13 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
     private Context context;
     private CharacteristicListAdapter characteristicListAdapter;
     // group titles
-    private List<String> listDataGroup;
+    private List<BluetoothGattService> listDataGroup;
 
     // child data
-    private HashMap<String, List<BluetoothGattCharacteristic>> listDataChild;
+    private HashMap<BluetoothGattService, List<BluetoothGattCharacteristic>> listDataChild;
 
-    public ExpandableListViewAdapter(Context context, List<String> listDataGroup,
-                                     HashMap<String, List<BluetoothGattCharacteristic>> listChildData) {
+    public ExpandableListViewAdapter(Context context, List<BluetoothGattService> listDataGroup,
+                                     HashMap<BluetoothGattService, List<BluetoothGattCharacteristic>> listChildData) {
         this.context = context;
         this.listDataGroup = listDataGroup;
         this.listDataChild = listChildData;
@@ -56,7 +57,7 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
         ListView listView = convertView.findViewById(R.id.characteristic_list_id);
         List<BluetoothGattCharacteristic>  lbc= new ArrayList<>();
         CharacteristicListAdapter characteristicListAdapter = new CharacteristicListAdapter(this.context, lbc);
-        
+
         return convertView;
     }
 
@@ -87,7 +88,7 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded,
                              View convertView, ViewGroup parent) {
-        String headerTitle = (String) getGroup(groupPosition);
+        BluetoothGattService headerTitle = (BluetoothGattService) getGroup(groupPosition);
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -97,7 +98,7 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
         TextView textViewGroup = convertView
                 .findViewById(R.id.textViewGroup);
         textViewGroup.setTypeface(null, Typeface.BOLD);
-        textViewGroup.setText(headerTitle);
+        textViewGroup.setText(headerTitle.getUuid().toString());
 
         return convertView;
     }
