@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,6 +64,8 @@ public class DeviceDetailFragment extends Fragment {
      * method to initialize the views
      */
     private void initViews() {
+        ProgressBar progressBar = getView().findViewById(R.id.indeterminateBar);
+        progressBar.setVisibility(View.VISIBLE);
         address = getArguments().getString("deviceAddress");
         deviceName = getArguments().getString("deviceName");
         expandableListView = getView().findViewById(R.id.expandableListView);
@@ -128,5 +131,7 @@ public class DeviceDetailFragment extends Fragment {
             listDataChild.put(s, s.getCharacteristics());
         }
         expandableListViewAdapter.notifyDataSetChanged();
+        ProgressBar progressBar = getView().findViewById(R.id.indeterminateBar);
+        progressBar.setVisibility(View.GONE);
     }
 }
