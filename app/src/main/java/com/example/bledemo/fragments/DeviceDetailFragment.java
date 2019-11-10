@@ -66,6 +66,8 @@ public class DeviceDetailFragment extends Fragment {
     private void initViews() {
         ProgressBar progressBar = getView().findViewById(R.id.indeterminateBar);
         progressBar.setVisibility(View.VISIBLE);
+        TextView statusTextView = getView().findViewById(R.id.progress_status_text_view);
+        statusTextView.setVisibility(View.VISIBLE);
         address = getArguments().getString("deviceAddress");
         deviceName = getArguments().getString("deviceName");
         expandableListView = getView().findViewById(R.id.expandableListView);
@@ -133,5 +135,13 @@ public class DeviceDetailFragment extends Fragment {
         expandableListViewAdapter.notifyDataSetChanged();
         ProgressBar progressBar = getView().findViewById(R.id.indeterminateBar);
         progressBar.setVisibility(View.GONE);
+        TextView statusTextView = getView().findViewById(R.id.progress_status_text_view);
+        statusTextView.setVisibility(View.GONE);
+    }
+
+    public void updateProgressBar(String status){
+        TextView statusTextView = getView().findViewById(R.id.progress_status_text_view);
+        statusTextView.setText(status);
+
     }
 }

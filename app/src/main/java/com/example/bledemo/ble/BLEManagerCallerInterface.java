@@ -14,5 +14,8 @@ public interface BLEManagerCallerInterface {
     void newDeviceDetected();
     void servicesDiscovered(BluetoothGatt bg);
     void characteristicChanged(String bc);
+    void connectionToBleFailed();
+    void connectionToBleSuccesfully();
+    void connectionStatus(String status);
 
 }

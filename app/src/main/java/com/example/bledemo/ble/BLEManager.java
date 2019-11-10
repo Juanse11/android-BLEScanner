@@ -319,7 +319,11 @@ public class BLEManager extends ScanCallback {
                                                     int status, int newState) {
                     super.onConnectionStateChange(gatt, status, newState);
                     if (newState == BluetoothGatt.STATE_CONNECTED) {
+                        caller.connectionStatus("Discovering services");
                         gatt.discoverServices();
+                    }else{
+                        caller.connectionToBleFailed();
+                        caller.connectionStatus("Connection failed");
                     }
                 }
 
@@ -327,6 +331,7 @@ public class BLEManager extends ScanCallback {
                 public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                     super.onServicesDiscovered(gatt, status);
                     lastBluetoothGatt = gatt;
+                    caller.connectionStatus("Setting characteristics up");
                     searchAndSetAllNotifyAbleCharacteristics();
 
                 }

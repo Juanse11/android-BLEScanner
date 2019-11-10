@@ -158,4 +158,19 @@ public class BLEManagementService extends IntentService implements BroadcastMana
 
     }
 
+    @Override
+    public void connectionToBleFailed() {
+
+    }
+
+    @Override
+    public void connectionToBleSuccesfully() {
+
+    }
+
+    @Override
+    public void connectionStatus(String status) {
+
+    }
+
 }

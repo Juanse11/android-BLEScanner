@@ -53,7 +53,8 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        fm.beginTransaction().replace(R.id.main_container, fragment1).commit();
+        fm.beginTransaction().add(R.id.main_container, fragment1, "1").commit();
+        fm.beginTransaction().add(R.id.main_container, fragment2, "2").hide(fragment2).commit();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.start_stop_scan_button);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -72,12 +73,17 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.action_home:
-                        fm.beginTransaction().replace(R.id.main_container, fragment1).commit();
+                        if (active instanceof DeviceDetailFragment){
+                            fm.beginTransaction().remove(active).show(fragment1).commit();
+                        }else {
+                            fm.beginTransaction().hide(active).show(fragment1).commit();
+                        }
                         active = fragment1;
+
                         return true;
 
                     case R.id.action_log:
-                        fm.beginTransaction().replace(R.id.main_container, fragment2).commit();
+                        fm.beginTransaction().hide(active).show(fragment2).commit();
                         active = fragment2;
                         return true;
 
@@ -114,6 +120,14 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (active instanceof DeviceDetailFragment){
+            fm.beginTransaction().remove(active).show(fragment1).commit();
+            active = fragment1;
+        }
+        super.onBackPressed();
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -220,6 +234,43 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     }
 
     @Override
+    public void connectionToBleFailed() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                fm.beginTransaction().remove(active).show(fragment1).commit();
+                fm.executePendingTransactions();
+                AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                alertDialog.setTitle("Error");
+                alertDialog.setMessage("There was a problem connecting with this device");
+                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.show();
+            }
+        });
+    }
+
+    @Override
+    public void connectionToBleSuccesfully() {
+
+    }
+
+    @Override
+    public void connectionStatus(final String status) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentByTag("device");
+                deviceDetailFragment.updateProgressBar(status);
+            }
+        });
+    }
+
+    @Override
     public void onDeviceSelected(final String address, final String name) {
         runOnUiThread(new Runnable() {
             @Override
@@ -234,8 +285,8 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                 FragmentTransaction transaction = fm.beginTransaction();
                 transaction.hide(active);
                 transaction.add(R.id.main_container, newFragment, "device");
-                transaction.addToBackStack(null);
                 transaction.commit();
+                transaction.addToBackStack(null);
                 active = newFragment;
             }
         });
@@ -243,6 +294,6 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void connectToGatServer(String address) {
-        bleManager.connectToGATTServer(mainActivity.bleManager.getByAddress(address));
+        bleManager.connectToGATTServer(bleManager.getByAddress(address));
     }
 }
