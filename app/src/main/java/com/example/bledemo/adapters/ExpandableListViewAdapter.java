@@ -48,15 +48,17 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
     @Override
     public View getChildView(int groupPosition, final int childPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
-
+        BluetoothGattCharacteristic child = (BluetoothGattCharacteristic) getChild(groupPosition, childPosition);
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = layoutInflater.inflate(R.layout.service_list_item, null);
         }
-        ListView listView = convertView.findViewById(R.id.characteristic_list_id);
-        List<BluetoothGattCharacteristic>  lbc= new ArrayList<>();
-        CharacteristicListAdapter characteristicListAdapter = new CharacteristicListAdapter(this.context, lbc);
+
+        TextView textViewGroup = convertView
+                .findViewById(R.id.characteristic_list_item_text_view);
+        textViewGroup.setTypeface(null, Typeface.BOLD);
+        textViewGroup.setText(child.getUuid().toString());
 
         return convertView;
     }

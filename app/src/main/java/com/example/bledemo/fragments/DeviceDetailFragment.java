@@ -124,6 +124,9 @@ public class DeviceDetailFragment extends Fragment {
 
     public void initListData(List<BluetoothGattService> services ) {
         listDataGroup.addAll(services);
+        for (BluetoothGattService s: services ) {
+            listDataChild.put(s, s.getCharacteristics());
+        }
         expandableListViewAdapter.notifyDataSetChanged();
     }
 }
