@@ -38,6 +38,7 @@ public class DeviceDetailFragment extends Fragment {
     private String deviceName;
     private HashMap<BluetoothGattService, List<BluetoothGattCharacteristic>> listDataChild;
 
+
     public DeviceDetailFragment() {
         // Required empty public constructor
     }

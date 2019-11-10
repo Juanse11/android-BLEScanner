@@ -54,7 +54,8 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         fm.beginTransaction().add(R.id.main_container, fragment1, "1").commit();
-        fm.beginTransaction().add(R.id.main_container, fragment2, "2").hide(fragment2).commit();
+        fm.beginTransaction().add(R.id.main_container, fragment2, "log").hide(fragment2).commit();
+        fm.executePendingTransactions();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.start_stop_scan_button);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -85,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                     case R.id.action_log:
                         fm.beginTransaction().hide(active).show(fragment2).commit();
                         active = fragment2;
+                        writeEntry("");
                         return true;
 
                 }
@@ -94,8 +96,10 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
         bleManager = new BLEManager(this, this);
         if (!bleManager.isBluetoothOn()) {
+            writeEntry("Bluetooth State: Off");
             bleManager.RequestBluetoothDeviceEnable(this);
         } else {
+            writeEntry("Bluetooth State: On");
             bleManager.requestLocationPermissions(this, 1002);
         }
         mainActivity = this;
@@ -140,9 +144,12 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                 if (currentResult != PackageManager.PERMISSION_GRANTED) {
                     allPermissionsGranted = false;
                     break;
+                }else{
+                    writeEntry("Location permissions granted");
                 }
             }
             if (!allPermissionsGranted) {
+                    writeEntry("Location permissions not granted");
                 AlertDialog.Builder builder = new AlertDialog.Builder(this)
                         .setTitle("Permissions")
                         .setMessage("Camera and Location permissions must be granted in order to execute the app")
@@ -163,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         try {
             if (requestCode == 1001) {
                 if (resultCode != Activity.RESULT_OK) {
-
+                    writeEntry("Bluetooth State: On");
                 } else {
                     bleManager.requestLocationPermissions(this, 1002);
 
@@ -177,12 +184,13 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void scanStartedSuccessfully() {
+        writeEntry("Scanning devices...");
 
     }
 
     @Override
     public void scanStoped() {
-
+        writeEntry("Scanning devices stopped");
     }
 
     @Override
@@ -196,6 +204,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             @Override
             public void run() {
                 try {
+                    writeEntry("New device detected nearby");
                     ListView listView = (ListView) findViewById(R.id.devices_list_id);
                     BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), bleManager.scanResults, mainActivity,mainActivity);
                     listView.setAdapter(adapter);
@@ -216,6 +225,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                writeEntry("Services discovered");
                 DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentByTag("device");
                 deviceDetailFragment.initListData(bg.getServices());
             }
@@ -238,6 +248,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                writeEntry("Connecting to BLE device failed");
                 fm.beginTransaction().remove(active).show(fragment1).commit();
                 fm.executePendingTransactions();
                 AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
@@ -256,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void connectionToBleSuccesfully() {
-
+        writeEntry("Connecting to BLE device failed");
     }
 
     @Override
@@ -264,10 +275,26 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                writeEntry(status);
                 DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentByTag("device");
                 deviceDetailFragment.updateProgressBar(status);
             }
         });
+    }
+
+    public void writeEntry(final String log) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                LogFragment logFragment = (LogFragment) getSupportFragmentManager().findFragmentByTag("log");
+                if (log != ""){
+                    logFragment.newLogEntry(log);
+                }else{
+                    logFragment.updateList();
+                }
+            }
+        });
+
     }
 
     @Override
@@ -294,6 +321,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void connectToGatServer(String address) {
+        writeEntry("Connecting to BLE device...");
         bleManager.connectToGATTServer(bleManager.getByAddress(address));
     }
 }
