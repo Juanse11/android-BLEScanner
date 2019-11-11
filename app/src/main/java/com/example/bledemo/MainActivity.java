@@ -14,9 +14,11 @@ import android.os.Bundle;
 import com.example.bledemo.adapters.BluetoothDeviceListAdapter;
 import com.example.bledemo.ble.BLEManager;
 import com.example.bledemo.ble.BLEManagerCallerInterface;
+import com.example.bledemo.fragments.CharacteristicDetailFragment;
 import com.example.bledemo.fragments.DeviceDetailFragment;
 import com.example.bledemo.fragments.HomeFragment;
 import com.example.bledemo.fragments.LogFragment;
+import com.example.bledemo.fragments.OnCharacteristicSelectedInterface;
 import com.example.bledemo.fragments.OnDeviceSelectedInterface;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -39,7 +41,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements BLEManagerCallerInterface, OnDeviceSelectedInterface {
+public class MainActivity extends AppCompatActivity implements BLEManagerCallerInterface, OnDeviceSelectedInterface, OnCharacteristicSelectedInterface {
 
     public BLEManager bleManager;
     private MainActivity mainActivity;
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     final Fragment fragment2 = new LogFragment();
     final FragmentManager fm = getSupportFragmentManager();
     Fragment active = fragment1;
+    Fragment currentDevice;
     private BluetoothGatt lastBluetoothGatt;
 
     @Override
@@ -76,7 +79,9 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                     case R.id.action_home:
                         if (active instanceof DeviceDetailFragment){
                             fm.beginTransaction().remove(active).show(fragment1).commit();
-                        }else {
+                        }else if(active instanceof CharacteristicDetailFragment) {
+                            fm.beginTransaction().remove(active).show(currentDevice).commit();
+                        }else{
                             fm.beginTransaction().hide(active).show(fragment1).commit();
                         }
                         active = fragment1;
@@ -129,6 +134,10 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         if (active instanceof DeviceDetailFragment){
             fm.beginTransaction().remove(active).show(fragment1).commit();
             active = fragment1;
+        }
+        if (active instanceof CharacteristicDetailFragment){
+            fm.beginTransaction().remove(active).show(currentDevice).commit();
+            active = currentDevice;
         }
         super.onBackPressed();
     }
@@ -248,7 +257,6 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                writeEntry("Connecting to BLE device failed");
                 fm.beginTransaction().remove(active).show(fragment1).commit();
                 active = fragment1;
                 fm.executePendingTransactions();
@@ -316,6 +324,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                 transaction.commit();
                 transaction.addToBackStack(null);
                 active = newFragment;
+                currentDevice = newFragment;
             }
         });
     }
@@ -325,4 +334,31 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         writeEntry("Connecting to BLE device...");
         bleManager.connectToGATTServer(bleManager.getByAddress(address));
     }
+
+    @Override
+    public void onCharacteristicSelected(final BluetoothGattCharacteristic characteristic) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Fragment newFragment = new CharacteristicDetailFragment();
+                Bundle args = new Bundle();
+                args.putString("charUUID", characteristic.getUuid().toString());
+                args.putString("servUUID", characteristic.getService().getUuid().toString());
+                newFragment.setArguments(args);
+                FragmentTransaction transaction = fm.beginTransaction();
+                transaction.hide(active);
+                transaction.add(R.id.main_container, newFragment, "char");
+                transaction.commit();
+                transaction.addToBackStack(null);
+                active = newFragment;
+            }
+        });
+    }
+
+    @Override
+    public void onValueSet(String value,String servUUID, String charUUID) {
+        bleManager.setValue(value, servUUID, charUUID);
+    }
+
+
 }

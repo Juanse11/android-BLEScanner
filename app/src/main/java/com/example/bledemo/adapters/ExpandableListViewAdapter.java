@@ -12,6 +12,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.bledemo.R;
+import com.example.bledemo.fragments.OnCharacteristicSelectedInterface;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.List;
 
 public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
 
+    private final OnCharacteristicSelectedInterface caller;
     private Context context;
     private CharacteristicListAdapter characteristicListAdapter;
     // group titles
@@ -28,10 +30,11 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
     private HashMap<BluetoothGattService, List<BluetoothGattCharacteristic>> listDataChild;
 
     public ExpandableListViewAdapter(Context context, List<BluetoothGattService> listDataGroup,
-                                     HashMap<BluetoothGattService, List<BluetoothGattCharacteristic>> listChildData) {
+                                     HashMap<BluetoothGattService, List<BluetoothGattCharacteristic>> listChildData, OnCharacteristicSelectedInterface caller) {
         this.context = context;
         this.listDataGroup = listDataGroup;
         this.listDataChild = listChildData;
+        this.caller = caller;
     }
 
     @Override
@@ -48,17 +51,23 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
     @Override
     public View getChildView(int groupPosition, final int childPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
-        BluetoothGattCharacteristic child = (BluetoothGattCharacteristic) getChild(groupPosition, childPosition);
+        final BluetoothGattCharacteristic child = (BluetoothGattCharacteristic) getChild(groupPosition, childPosition);
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = layoutInflater.inflate(R.layout.service_list_item, null);
         }
 
-        TextView textViewGroup = convertView
+        TextView textViewChild = convertView
                 .findViewById(R.id.characteristic_list_item_text_view);
-        textViewGroup.setTypeface(null, Typeface.BOLD);
-        textViewGroup.setText(child.getUuid().toString());
+        textViewChild.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                caller.onCharacteristicSelected(child);
+            }
+        });
+        textViewChild.setTypeface(null, Typeface.BOLD);
+        textViewChild.setText(child.getUuid().toString());
 
         return convertView;
     }

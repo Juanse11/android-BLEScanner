@@ -121,7 +121,7 @@ public class DeviceDetailFragment extends Fragment {
 
         listDataChild = new HashMap<>();
 
-        expandableListViewAdapter = new ExpandableListViewAdapter(getContext(), listDataGroup, listDataChild);
+        expandableListViewAdapter = new ExpandableListViewAdapter(getContext(), listDataGroup, listDataChild, (OnCharacteristicSelectedInterface) getContext());
 
         expandableListView.setAdapter(expandableListViewAdapter);
 

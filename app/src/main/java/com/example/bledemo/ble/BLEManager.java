@@ -212,6 +212,7 @@ public class BLEManager extends ScanCallback {
                     if (currentService != null) {
                         for (BluetoothGattCharacteristic currentCharacteristic : currentService.getCharacteristics()) {
                             if (currentCharacteristic != null) {
+
                                 if (isCharacteristicNotifiable(currentCharacteristic)) {
                                     commandQueue.add(currentCharacteristic);
                                 }
@@ -337,6 +338,7 @@ public class BLEManager extends ScanCallback {
                     } else {
                         caller.connectionStatus("Connection failed");
                         caller.connectionToBleFailed();
+                        lastBluetoothGatt.close();
 
                     }
                 }
@@ -367,8 +369,8 @@ public class BLEManager extends ScanCallback {
                 @Override
                 public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                     super.onCharacteristicChanged(gatt, characteristic);
-                    String v = parse(characteristic);
-                    caller.characteristicChanged(v);
+                    String s = parse(characteristic);
+                    caller.characteristicChanged(s);
                 }
 
                 @Override
@@ -378,7 +380,6 @@ public class BLEManager extends ScanCallback {
 
                 @Override
                 public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                    Log.d("asd", "asdasd");
                     processCommand();
                 }
 
@@ -400,6 +401,21 @@ public class BLEManager extends ScanCallback {
         } catch (Exception error) {
 
         }
+    }
+
+    public void setValue (String s, String servUUID, String charUUID){
+       BluetoothGattCharacteristic c = lastBluetoothGatt.getService(UUID.fromString(servUUID)).getCharacteristic(UUID.fromString(charUUID));
+       writeCharacteristic(c, hexStringToByteArray(s));
+    }
+
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
     }
 
 }
