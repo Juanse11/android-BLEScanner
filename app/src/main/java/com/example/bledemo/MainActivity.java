@@ -250,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             public void run() {
                 writeEntry("Connecting to BLE device failed");
                 fm.beginTransaction().remove(active).show(fragment1).commit();
+                active = fragment1;
                 fm.executePendingTransactions();
                 AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
                 alertDialog.setTitle("Error");

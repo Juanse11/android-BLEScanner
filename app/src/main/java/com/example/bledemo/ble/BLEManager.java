@@ -31,7 +31,9 @@ import com.example.bledemo.adapters.BluetoothDeviceListAdapter;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
 
 public class BLEManager extends ScanCallback {
@@ -39,6 +41,7 @@ public class BLEManager extends ScanCallback {
     Context context;
 
     BluetoothManager bluetoothManager;
+    Queue<BluetoothGattCharacteristic> commandQueue = new LinkedList<>();
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
     public List<ScanResult> scanResults = new ArrayList<>();
@@ -47,10 +50,11 @@ public class BLEManager extends ScanCallback {
     UUID HEART_RATE_SERVICE_UUID;
     UUID HEART_RATE_MEASUREMENT_CHAR_UUID;
     UUID HEART_RATE_CONTROL_POINT_CHAR_UUID;
-    UUID CLIENT_CHARACTERISTIC_CONFIG_UUID ;
+    UUID CLIENT_CHARACTERISTIC_CONFIG_UUID;
 
 
     public BLEManager(BLEManagerCallerInterface caller, Context context) {
+
         this.caller = caller;
         this.context = context;
         initializeBluetoothManager();
@@ -209,13 +213,7 @@ public class BLEManager extends ScanCallback {
                         for (BluetoothGattCharacteristic currentCharacteristic : currentService.getCharacteristics()) {
                             if (currentCharacteristic != null) {
                                 if (isCharacteristicNotifiable(currentCharacteristic)) {
-                                    try{
-                                        BluetoothGattDescriptor desc = currentCharacteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID);
-                                        desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                                        lastBluetoothGatt.writeDescriptor(desc);
-                                    }catch (Error e){
-                                        Log.d("Error", e.toString());
-                                    }
+                                    commandQueue.add(currentCharacteristic);
                                 }
                             }
                         }
@@ -227,6 +225,7 @@ public class BLEManager extends ScanCallback {
             Log.d("Error", "Error");
         }
     }
+
 
     public boolean readCharacteristic(BluetoothGattCharacteristic characteristic) {
         try {
@@ -300,10 +299,24 @@ public class BLEManager extends ScanCallback {
         return s;
     }
 
+    public void processCommand() {
+        if (commandQueue.size() == 0) {
+            return;
+        }
+        BluetoothGattCharacteristic currentCharacteristic = commandQueue.poll();
+        lastBluetoothGatt.setCharacteristicNotification(currentCharacteristic, true);
+        currentCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+        BluetoothGattDescriptor descriptor = currentCharacteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID);
+        if (descriptor != null) {
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            lastBluetoothGatt.writeDescriptor(descriptor);
+        }
+    }
+
     public void connectToGATTServer(BluetoothDevice device) {
         try {
 
-            device.connectGatt(this.context, false, new BluetoothGattCallback() {
+            lastBluetoothGatt = device.connectGatt(this.context, false, new BluetoothGattCallback() {
                 @Override
                 public void onPhyUpdate(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
                     super.onPhyUpdate(gatt, txPhy, rxPhy, status);
@@ -320,20 +333,24 @@ public class BLEManager extends ScanCallback {
                     super.onConnectionStateChange(gatt, status, newState);
                     if (newState == BluetoothGatt.STATE_CONNECTED) {
                         caller.connectionStatus("Discovering services");
-                        gatt.discoverServices();
-                    }else{
-                        caller.connectionToBleFailed();
+                        lastBluetoothGatt.discoverServices();
+                    } else {
                         caller.connectionStatus("Connection failed");
+                        caller.connectionToBleFailed();
+
                     }
                 }
 
                 @Override
                 public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                     super.onServicesDiscovered(gatt, status);
-                    lastBluetoothGatt = gatt;
                     caller.connectionStatus("Setting characteristics up");
-                    searchAndSetAllNotifyAbleCharacteristics();
-
+                    try {
+                        searchAndSetAllNotifyAbleCharacteristics();
+                        caller.servicesDiscovered(lastBluetoothGatt);
+                        processCommand();
+                    } catch (Exception error) {
+                    }
                 }
 
                 @Override
@@ -362,7 +379,7 @@ public class BLEManager extends ScanCallback {
                 @Override
                 public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
                     Log.d("asd", "asdasd");
-                    caller.servicesDiscovered(gatt);
+                    processCommand();
                 }
 
                 @Override

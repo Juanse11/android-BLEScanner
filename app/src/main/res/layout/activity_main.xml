@@ -8,11 +8,14 @@
     tools:context=".MainActivity">
 
 
-    <include layout="@layout/content_main" />
+    <include
+        layout="@layout/content_main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="70dp" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-
         android:layout_height="wrap_content"
         android:layout_gravity="bottom">
 
@@ -20,6 +23,7 @@
             android:id="@+id/multiple_actions_left"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="150dp"
             android:elevation="30sp"
             app:fab_addButtonColorNormal="@color/colorPrimary"
             app:fab_addButtonColorPressed="@color/colorPrimary"
@@ -28,12 +32,8 @@
             app:fab_expandDirection="up"
             app:fab_labelStyle="@style/menu_labels_style"
             app:fab_labelsPosition="right"
-
-            app:layout_constraintBottom_toBottomOf="@+id/navigation"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.95"
-            app:layout_constraintLeft_toLeftOf="@id/navigation"
-            app:layout_constraintRight_toRightOf="@id/navigation"
             app:layout_constraintStart_toStartOf="parent">
 
             <com.getbase.floatingactionbutton.FloatingActionButton
@@ -58,12 +58,19 @@
 
         </com.getbase.floatingactionbutton.FloatingActionsMenu>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:background="@drawable/shadow"
+            app:layout_constraintBottom_toTopOf="@+id/navigation" />
+
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/navigation"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:background="@color/colorAccent"
+            android:elevation="25sp"
             android:visibility="visible"
             app:itemIconTint="@color/colorText"
             app:itemTextColor="@color/colorText"
