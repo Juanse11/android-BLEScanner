@@ -358,19 +358,20 @@ public class BLEManager extends ScanCallback {
                 @Override
                 public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                     super.onCharacteristicRead(gatt, characteristic, status);
-
+                    caller.characteristicRead(parse(characteristic), characteristic);
                 }
 
                 @Override
                 public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                     super.onCharacteristicWrite(gatt, characteristic, status);
+                    caller.characteristicWrite(parse(characteristic), characteristic);
                 }
 
                 @Override
                 public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                     super.onCharacteristicChanged(gatt, characteristic);
                     String s = parse(characteristic);
-                    caller.characteristicChanged(s);
+                    caller.characteristicChanged(s, characteristic);
                 }
 
                 @Override
@@ -403,9 +404,9 @@ public class BLEManager extends ScanCallback {
         }
     }
 
-    public void setValue (String s, String servUUID, String charUUID){
-       BluetoothGattCharacteristic c = lastBluetoothGatt.getService(UUID.fromString(servUUID)).getCharacteristic(UUID.fromString(charUUID));
-       writeCharacteristic(c, hexStringToByteArray(s));
+    public void setValue(String s, String servUUID, String charUUID) {
+        BluetoothGattCharacteristic c = lastBluetoothGatt.getService(UUID.fromString(servUUID)).getCharacteristic(UUID.fromString(charUUID));
+        writeCharacteristic(c, hexStringToByteArray(s));
     }
 
     public static byte[] hexStringToByteArray(String s) {
@@ -413,7 +414,7 @@ public class BLEManager extends ScanCallback {
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
+                    + Character.digit(s.charAt(i + 1), 16));
         }
         return data;
     }

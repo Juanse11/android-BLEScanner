@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.bledemo.R;
@@ -44,16 +45,24 @@ public class CharacteristicDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         charUUID = getArguments().getString("charUUID");
         servUUID = getArguments().getString("servUUID");
+        caller = (OnCharacteristicSelectedInterface) getContext();
+        caller.getCharacteristic(servUUID, charUUID);
+        ProgressBar progressBar = getView().findViewById(R.id.indeterminateCharacteristicBar);
+        progressBar.setVisibility(View.VISIBLE);
+        TextView statusTextView = getView().findViewById(R.id.characteristic_status_text_view);
+        statusTextView.setVisibility(View.VISIBLE);
+
         TextView uuidTextView = getView().findViewById(R.id.uuid_text_view);
         uuidTextView.setText(charUUID);
-        caller = (OnCharacteristicSelectedInterface) getContext();
 
-        TextView valueTextview = getView().findViewById(R.id.value_text_view);
+
+        final TextView valueTextview = getView().findViewById(R.id.value_text_view);
         valueTextview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
                 final EditText edittext = new EditText(getActivity());
+                edittext.setPadding(20,20,20,20);
                 alert.setMessage("The value must be in Hex format");
                 alert.setTitle("Set Value");
 
@@ -62,6 +71,7 @@ public class CharacteristicDetailFragment extends Fragment {
                 alert.setPositiveButton("Set", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         String value = edittext.getText().toString();
+                        valueTextview.setText(value);
                         caller.onValueSet(value, servUUID, charUUID);
                     }
                 });
@@ -74,6 +84,21 @@ public class CharacteristicDetailFragment extends Fragment {
                 alert.show();
             }
         });
-
     }
+
+    public void updateValue(String value){
+        final TextView valueTextview = getView().findViewById(R.id.value_text_view);
+        valueTextview.setText(value);
+    }
+
+    public void readValue(String value){
+        final TextView valueTextview = getView().findViewById(R.id.value_text_view);
+        valueTextview.setText(value);
+
+        ProgressBar progressBar = getView().findViewById(R.id.indeterminateCharacteristicBar);
+        progressBar.setVisibility(View.GONE);
+        TextView statusTextView = getView().findViewById(R.id.characteristic_status_text_view);
+        statusTextView.setVisibility(View.GONE);
+    }
+
 }

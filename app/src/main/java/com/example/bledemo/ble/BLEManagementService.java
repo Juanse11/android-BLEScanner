@@ -154,9 +154,20 @@ public class BLEManagementService extends IntentService implements BroadcastMana
     }
 
     @Override
-    public void characteristicChanged(String bc) {
+    public void characteristicChanged(String bc, BluetoothGattCharacteristic c) {
 
     }
+
+    @Override
+    public void characteristicWrite(String bc, BluetoothGattCharacteristic c) {
+
+    }
+
+    @Override
+    public void characteristicRead(String bc, BluetoothGattCharacteristic c) {
+
+    }
+
 
     @Override
     public void connectionToBleFailed() {

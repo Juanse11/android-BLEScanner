@@ -40,6 +40,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements BLEManagerCallerInterface, OnDeviceSelectedInterface, OnCharacteristicSelectedInterface {
 
@@ -77,11 +78,11 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.action_home:
-                        if (active instanceof DeviceDetailFragment){
+                        if (active instanceof DeviceDetailFragment) {
                             fm.beginTransaction().remove(active).show(fragment1).commit();
-                        }else if(active instanceof CharacteristicDetailFragment) {
+                        } else if (active instanceof CharacteristicDetailFragment) {
                             fm.beginTransaction().remove(active).show(currentDevice).commit();
-                        }else{
+                        } else {
                             fm.beginTransaction().hide(active).show(fragment1).commit();
                         }
                         active = fragment1;
@@ -131,11 +132,11 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void onBackPressed() {
-        if (active instanceof DeviceDetailFragment){
+        if (active instanceof DeviceDetailFragment) {
             fm.beginTransaction().remove(active).show(fragment1).commit();
             active = fragment1;
         }
-        if (active instanceof CharacteristicDetailFragment){
+        if (active instanceof CharacteristicDetailFragment) {
             fm.beginTransaction().remove(active).show(currentDevice).commit();
             active = currentDevice;
         }
@@ -153,12 +154,12 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                 if (currentResult != PackageManager.PERMISSION_GRANTED) {
                     allPermissionsGranted = false;
                     break;
-                }else{
+                } else {
                     writeEntry("Location permissions granted");
                 }
             }
             if (!allPermissionsGranted) {
-                    writeEntry("Location permissions not granted");
+                writeEntry("Location permissions not granted");
                 AlertDialog.Builder builder = new AlertDialog.Builder(this)
                         .setTitle("Permissions")
                         .setMessage("Camera and Location permissions must be granted in order to execute the app")
@@ -215,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                 try {
                     writeEntry("New device detected nearby");
                     ListView listView = (ListView) findViewById(R.id.devices_list_id);
-                    BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), bleManager.scanResults, mainActivity,mainActivity);
+                    BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), bleManager.scanResults, mainActivity, mainActivity);
                     listView.setAdapter(adapter);
 
                 } catch (Exception error) {
@@ -243,11 +244,34 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     }
 
     @Override
-    public void characteristicChanged(final String bc) {
+    public void characteristicChanged(final String bc, final BluetoothGattCharacteristic c) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(mainActivity, ""+bc, Toast.LENGTH_SHORT).show();
+                if ((active instanceof CharacteristicDetailFragment) && active.getArguments().getString("charUUID").equals(c.getUuid().toString())) {
+                    ((CharacteristicDetailFragment) active).updateValue(bc);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void characteristicRead(final String bc, final BluetoothGattCharacteristic c) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((CharacteristicDetailFragment) active).readValue(bc);
+            }
+        });
+    }
+
+    @Override
+    public void characteristicWrite(final String bc, final BluetoothGattCharacteristic c) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((CharacteristicDetailFragment) active).updateValue(bc);
+
             }
         });
     }
@@ -276,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void connectionToBleSuccesfully() {
-        writeEntry("Connecting to BLE device failed");
+        writeEntry("BLE device connected successful");
     }
 
     @Override
@@ -296,9 +320,9 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             @Override
             public void run() {
                 LogFragment logFragment = (LogFragment) getSupportFragmentManager().findFragmentByTag("log");
-                if (log != ""){
+                if (log != "") {
                     logFragment.newLogEntry(log);
-                }else{
+                } else {
                     logFragment.updateList();
                 }
             }
@@ -356,8 +380,13 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     }
 
     @Override
-    public void onValueSet(String value,String servUUID, String charUUID) {
+    public void onValueSet(String value, String servUUID, String charUUID) {
         bleManager.setValue(value, servUUID, charUUID);
+    }
+
+    @Override
+    public void getCharacteristic(String servUUID, String charUUID) {
+        bleManager.readCharacteristic(this.lastBluetoothGatt.getService(UUID.fromString(servUUID)).getCharacteristic(UUID.fromString(charUUID)));
     }
 
 
