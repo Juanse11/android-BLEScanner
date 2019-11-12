@@ -25,11 +25,11 @@ import java.util.List;
 
 
 
-public class CharacteristicListAdapter extends ArrayAdapter<BluetoothGattCharacteristic> {
+public class DescriptorListAdapter extends ArrayAdapter<BluetoothGattCharacteristic> {
     private final Context context;
     private List<BluetoothGattCharacteristic> scanResultList;
 
-    public CharacteristicListAdapter(@NonNull Context context, List<BluetoothGattCharacteristic> scanResultList) {
+    public DescriptorListAdapter(@NonNull Context context, List<BluetoothGattCharacteristic> scanResultList) {
         super(context, R.layout.device_list_item,scanResultList);
         this.context = context;
         this.scanResultList = scanResultList;

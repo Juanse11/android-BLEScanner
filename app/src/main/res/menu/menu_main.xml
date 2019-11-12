@@ -5,24 +5,23 @@
     tools:context="com.example.bledemo.MainActivity">
     <item
         android:id="@+id/action_home"
-        android:title="Home"
         app:showAsAction="never"
-
+        android:title="Home"
         android:icon="@drawable/ic_house_24px"
         android:checkableBehavior="none"
         />
     <item
         android:id="@+id/action_empty"
-        android:title=""
         android:checkable="false"
         android:checked="false"
+        android:title=""
         app:showAsAction="always"
         android:enabled="false"
         />
     <item
+        android:title="Log"
         android:icon="@drawable/ic_assignment_24px"
         android:id="@+id/action_log"
-        android:title="Log"
         app:showAsAction="never"
         android:checkableBehavior="none"
         />

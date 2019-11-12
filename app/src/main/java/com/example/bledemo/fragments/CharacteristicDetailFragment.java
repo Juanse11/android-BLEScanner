@@ -2,6 +2,8 @@ package com.example.bledemo.fragments;
 
 
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
@@ -12,11 +14,15 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.bledemo.R;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -26,7 +32,9 @@ public class CharacteristicDetailFragment extends Fragment {
     String charUUID;
     String servUUID;
     OnCharacteristicSelectedInterface caller;
+    ArrayList<String> listOfDescriptors = new ArrayList<>();
 
+    ArrayAdapter<String> adapter;
     public CharacteristicDetailFragment() {
         // Required empty public constructor
     }
@@ -43,6 +51,7 @@ public class CharacteristicDetailFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, listOfDescriptors);
         charUUID = getArguments().getString("charUUID");
         servUUID = getArguments().getString("servUUID");
         caller = (OnCharacteristicSelectedInterface) getContext();
@@ -91,7 +100,7 @@ public class CharacteristicDetailFragment extends Fragment {
         valueTextview.setText(value);
     }
 
-    public void readValue(String value){
+    public void readValue(String value, BluetoothGattCharacteristic c){
         final TextView valueTextview = getView().findViewById(R.id.value_text_view);
         valueTextview.setText(value);
 
@@ -99,6 +108,12 @@ public class CharacteristicDetailFragment extends Fragment {
         progressBar.setVisibility(View.GONE);
         TextView statusTextView = getView().findViewById(R.id.characteristic_status_text_view);
         statusTextView.setVisibility(View.GONE);
+        for (BluetoothGattDescriptor d: c.getDescriptors()) {
+            listOfDescriptors.add(d.getUuid().toString());
+        }
+        ListView listView = getView().findViewById(R.id.descriptors_list_view);
+        listView.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
     }
 
 }

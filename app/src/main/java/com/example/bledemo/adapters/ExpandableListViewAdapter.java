@@ -8,13 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.bledemo.R;
 import com.example.bledemo.fragments.OnCharacteristicSelectedInterface;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -22,7 +20,7 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
 
     private final OnCharacteristicSelectedInterface caller;
     private Context context;
-    private CharacteristicListAdapter characteristicListAdapter;
+    private DescriptorListAdapter characteristicListAdapter;
     // group titles
     private List<BluetoothGattService> listDataGroup;
 
@@ -108,7 +106,6 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
 
         TextView textViewGroup = convertView
                 .findViewById(R.id.textViewGroup);
-        textViewGroup.setTypeface(null, Typeface.BOLD);
         textViewGroup.setText(headerTitle.getUuid().toString());
 
         return convertView;

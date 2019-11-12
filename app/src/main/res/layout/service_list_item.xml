@@ -6,6 +6,14 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <TextView
+        android:id="@+id/device_address_text_view"
+        android:paddingStart="10dp"
+        android:paddingBottom="10dp"
+        android:textSize="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="Characteristic" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,7 +27,7 @@
             android:layout_margin="5dp"
             android:layout_weight="0.5"
             android:text="test"
-            android:textSize="16dp"
+            android:textSize="14dp"
 
             ></TextView>
 
@@ -35,8 +43,8 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 android:layout_weight="0.5"
-                android:text="test"
-                android:textSize="16dp"
+                android:text="R"
+                android:textSize="14dp"
 
                 ></TextView>
 
@@ -46,8 +54,8 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 android:layout_weight="0.5"
-                android:text="test"
-                android:textSize="16dp"
+                android:text="W"
+                android:textSize="14dp"
 
                 ></TextView>
             <TextView
@@ -56,8 +64,8 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 android:layout_weight="0.5"
-                android:text="test"
-                android:textSize="16dp"
+                android:text="N"
+                android:textSize="14dp"
 
                 ></TextView>
 

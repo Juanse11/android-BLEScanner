@@ -8,7 +8,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/device_list_item_text_view"
         android:layout_margin="10dp"
-        android:textSize="20dp"
+        android:textSize="14dp"
         android:layout_weight="0.5"
         android:text="test"
 
@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/device_list_item_text_view2"
         android:layout_margin="10dp"
-        android:textSize="20dp"
+        android:textSize="14dp"
         android:layout_weight="0.5"
         android:text="test"
 

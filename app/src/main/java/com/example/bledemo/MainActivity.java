@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ((CharacteristicDetailFragment) active).readValue(bc);
+                ((CharacteristicDetailFragment) active).readValue(bc, c);
             }
         });
     }
