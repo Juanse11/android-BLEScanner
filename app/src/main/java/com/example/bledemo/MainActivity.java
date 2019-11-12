@@ -270,8 +270,10 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ((CharacteristicDetailFragment) active).updateValue(bc);
+                View contextView = findViewById(R.id.main_container);
 
+                Snackbar.make(contextView, "Success" ,Snackbar.LENGTH_SHORT)
+                        .show();
             }
         });
     }
