@@ -95,11 +95,15 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                     case R.id.action_home:
                         if (active instanceof DeviceDetailFragment) {
                             fm.beginTransaction().remove(active).show(fragment1).commit();
+                            active = fragment1;
                         } else if (active instanceof CharacteristicDetailFragment) {
                             fm.beginTransaction().remove(active).show(currentDevice).commit();
+                            active = currentDevice;
                         } else if (currentDevice != null) {
                             fm.beginTransaction().hide(active).show(currentDevice).commit();
+                            active = currentDevice;
                         }  else {
+                            active = fragment1;
                             fm.beginTransaction().hide(active).show(fragment1).commit();
                         }
 
