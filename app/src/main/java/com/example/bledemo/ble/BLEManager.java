@@ -141,7 +141,6 @@ public class BLEManager extends ScanCallback {
 
     public void scanDevices() {
         try {
-            Log.d("lol", "lollololo");
             scanResults.clear();
             bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
             bluetoothLeScanner.startScan(this);
@@ -229,9 +228,12 @@ public class BLEManager extends ScanCallback {
     }
 
 
-    public boolean readCharacteristic(BluetoothGattCharacteristic characteristic) {
+        public boolean readCharacteristic(BluetoothGattCharacteristic characteristic) {
         try {
-            if (characteristic == null) return false;
+            if (characteristic == null){
+                caller.characteristicRead(null, null);
+                return false;
+            }
             boolean a = lastBluetoothGatt.readCharacteristic(characteristic);
             return a;
         } catch (Exception error) {
@@ -241,7 +243,10 @@ public class BLEManager extends ScanCallback {
 
     public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] data) {
         try {
-            if (characteristic == null) return false;
+            if (characteristic == null){
+                caller.characteristicWrite(null, null);
+                return false;
+            }
             characteristic.setValue(data);
             boolean a = lastBluetoothGatt.writeCharacteristic(characteristic);
             return a;

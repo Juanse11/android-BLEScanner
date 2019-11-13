@@ -30,13 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
- */
+
 public class BLEManagementService extends Service implements BroadcastManagerCallerInterface, BLEManagerCallerInterface {
 
     private static final String CHANNEL_ID = "BLEServiceChannel";
@@ -55,17 +49,18 @@ public class BLEManagementService extends Service implements BroadcastManagerCal
     public static final String ON_WRITE_CHARACTERISTIC = "ON_WRITE_CHARACTERISTIC";
     public static final String GET_LAST_STATE = "GET_LAST_STATE";
     public static final String GET_LAST_STATE_RESULT = "GET_LAST_STATE_RESULT";
+    public static final String DISCONNECT_DEVICE = "DISCONNECT_DEVICE";
+    public static final String ON_DISCONNECT_DEVICE = "ON_DISCONNECT_DEVICE";
+    public static final String DEVICE_CONNECTION_FAILED = "DEVICE_CONNECTION_FAILED";
 
 
-    // TODO: Rename actions, choose action names that describe tasks that this
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
+
+
+
     public static final String ACTION_CONNECT = "com.example.myfirstapplication.network.action.ACTION_CONNECT";
     private static final String ACTION_BAZ = "com.example.myfirstapplication.network.action.BAZ";
     private int notificationID;
 
-    // TODO: Rename parameters
-    //private String SERVER_HOST = "172.17.9.21";
-    //private int SERVER_PORT = 9090;
 
 
     private ArrayList<BluetoothGattService> gattServices;
@@ -81,14 +76,21 @@ public class BLEManagementService extends Service implements BroadcastManagerCal
                 (int) System.currentTimeMillis(), notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        Intent stopnotificationIntent = new Intent(this, BLEManagementService.class);
+        stopnotificationIntent.setAction("STOP_SERVICE");
+        PendingIntent Intent = PendingIntent.getService(this, 0, stopnotificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-                .setContentTitle("Example Service")
-                .setContentText(input)
-                .setSmallIcon(R.drawable.ic_launcher_background)
+        NotificationCompat.Builder notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+
+                .setContentTitle("Bluetooth Low Energy App")
+                .setContentText("BLE Service is running in background")
+                .setSmallIcon(R.drawable.ic_bluetooth_searching_24px)
                 .setContentIntent(pendingIntent)
-                .build();
-        startForeground(1, notification);
+                        .addAction(android.R.drawable.ic_media_pause, "Stop", Intent);
+
+
+
+        startForeground(1, notification.build());
         Thread t = new Thread("BLEService(" + startId + ")") {
             @Override
             public void run() {
@@ -97,6 +99,10 @@ public class BLEManagementService extends Service implements BroadcastManagerCal
                     if (ACTION_CONNECT.equals(action)) {
                         initializeBroadcastManager();
                         initializeBLEManager();
+                    }else{
+                        stopForeground(true);
+                        stopSelf();
+
                     }
                 }
             }
@@ -147,6 +153,7 @@ public class BLEManagementService extends Service implements BroadcastManagerCal
     @Override
     public void MessageReceivedThroughBroadcastManager(String channel, String type, Bundle message) {
         try {
+            Bundle b = new Bundle();
             switch (type) {
                 case START_SCANNING:
                     bleManager.scanDevices();
@@ -154,8 +161,12 @@ public class BLEManagementService extends Service implements BroadcastManagerCal
                 case CONNECT_TO_GATT_SERVER:
                     bleManager.connectToGATTServer(bleManager.getByAddress(message.getString("deviceAddress")));
                     break;
+                case DISCONNECT_DEVICE:
+                    bleManager.lastBluetoothGatt.close();
+                    b.putString("result", "Device disconnected successfully");
+                    broadcastManager.sendBroadcast(ON_DISCONNECT_DEVICE, b);
+                    break;
                 case GET_LAST_STATE:
-                    Bundle b = new Bundle();
                     b.putParcelableArrayList("services",(ArrayList<BluetoothGattService>) bleManager.lastBluetoothGatt.getServices());
                     b.putString("address", bleManager.lastBluetoothGatt.getDevice().getAddress());
                     b.putString("name", bleManager.lastBluetoothGatt.getDevice().getName());
@@ -179,14 +190,16 @@ public class BLEManagementService extends Service implements BroadcastManagerCal
 
     }
 
-    private void sendNotification(String charUUID) {
+    private void sendNotification(String servUUID,String charUUID) {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 (int) System.currentTimeMillis(), notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Bluetooth Low Energy")
-                .setContentText("Characteristic with UUID " + charUUID + " has changed")
+                .setContentText("Characteristic with UUID " + charUUID + " from service with UUID "+ servUUID + " has changed")
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText("Characteristic with UUID " + charUUID + " from service with UUID "+ servUUID + " has changed"))
                 .setSmallIcon(R.drawable.ic_bluetooth_searching_24px)
                 .setContentIntent(pendingIntent);
 
@@ -249,7 +262,7 @@ public class BLEManagementService extends Service implements BroadcastManagerCal
         b.putParcelable("characteristic", c);
         b.putString("value", bc);
         broadcastManager.sendBroadcast(CHANGE_CHARACTERISTIC, b);
-        sendNotification(c.getUuid().toString());
+        sendNotification(c.getService().getUuid().toString(), c.getUuid().toString());
     }
 
     @Override
@@ -265,13 +278,13 @@ public class BLEManagementService extends Service implements BroadcastManagerCal
         Bundle b = new Bundle();
         b.putParcelable("characteristic", c);
         b.putString("value", bc);
-        broadcastManager.sendBroadcast(BLEManagementService.ON_READ_CHARACTERISTIC, b);
+        broadcastManager.sendBroadcast(ON_READ_CHARACTERISTIC, b);
     }
 
 
     @Override
     public void connectionToBleFailed() {
-
+        broadcastManager.sendBroadcast(DEVICE_CONNECTION_FAILED, new Bundle());
     }
 
     @Override

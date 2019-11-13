@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     Fragment currentDevice;
     private BluetoothGatt lastBluetoothGatt;
     private ArrayList<BluetoothGattService> bleServices;
+    private ArrayList<String> listOfLogs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,10 +97,12 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                             fm.beginTransaction().remove(active).show(fragment1).commit();
                         } else if (active instanceof CharacteristicDetailFragment) {
                             fm.beginTransaction().remove(active).show(currentDevice).commit();
-                        } else {
+                        } else if (currentDevice != null) {
+                            fm.beginTransaction().hide(active).show(currentDevice).commit();
+                        }  else {
                             fm.beginTransaction().hide(active).show(fragment1).commit();
                         }
-                        active = fragment1;
+
 
                         return true;
 
@@ -148,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         }
     }
 
-    public void restoreState(){
+    public void restoreState() {
 
     }
 
@@ -171,17 +174,37 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         return super.onOptionsItemSelected(item);
     }
 
+
+
     @Override
     public void onBackPressed() {
         if (active instanceof DeviceDetailFragment) {
-            fm.beginTransaction().remove(active).show(fragment1).commit();
-            active = fragment1;
-        }
-        if (active instanceof CharacteristicDetailFragment) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                    .setTitle("Disconnect Device")
+                    .setMessage("You will disconnect from this device. Do you want to continue?")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            fm.beginTransaction().remove(active).show(fragment1).commit();
+                            active = fragment1;
+                            broadcastManager.sendBroadcast(BLEManagementService.DISCONNECT_DEVICE, new Bundle());
+                        }
+                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            ;
+            builder.show();
+
+        }else if (active instanceof CharacteristicDetailFragment) {
             fm.beginTransaction().remove(active).show(currentDevice).commit();
             active = currentDevice;
+        }else{
+            super.onBackPressed();
         }
-        super.onBackPressed();
+
     }
 
     @Override
@@ -339,6 +362,19 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                if (!BLEManager.isCharacteristicReadable(characteristic)) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(mainActivity)
+                            .setTitle("Error")
+                            .setMessage("This characteristic can't be read.")
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    builder.show();
+                    return;
+                }
                 Fragment newFragment = new CharacteristicDetailFragment();
                 Bundle args = new Bundle();
                 args.putParcelable("characteristic", characteristic);
@@ -355,6 +391,19 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void onValueSet(String value, BluetoothGattCharacteristic c) {
+        if (!BLEManager.isCharacteristicWriteable(c)) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(mainActivity)
+                    .setTitle("Error")
+                    .setMessage("This characteristic can't be written.")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            builder.show();
+            return;
+        }
         Bundle b = new Bundle();
         b.putString("charUUID", c.getUuid().toString());
         b.putString("servUUID", c.getService().getUuid().toString());
@@ -379,9 +428,13 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                 switch (type) {
                     case BLEManagementService.NEW_DEVICE_DETECTED:
                         writeEntry("New device detected nearby");
+                        ArrayList<ScanResult> scanResults = message.<ScanResult>getParcelableArrayList("scanResults");
                         ListView listView = (ListView) findViewById(R.id.devices_list_id);
-                        BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), message.<ScanResult>getParcelableArrayList("scanResults"), mainActivity, mainActivity);
-                        listView.setAdapter(adapter);
+                        if (listView.getAdapter() == null) {
+                            BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), scanResults, mainActivity, mainActivity);
+                            listView.setAdapter(adapter);
+                        }
+                        ((BluetoothDeviceListAdapter) listView.getAdapter()).refill(scanResults);
                         break;
                     case BLEManagementService.SERVICES_DISCOVERED:
                         writeEntry("Services discovered");
@@ -399,9 +452,26 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                         }
                         break;
                     case BLEManagementService.ON_WRITE_CHARACTERISTIC:
-                        View contextView = findViewById(R.id.main_container);
-                        Snackbar.make(contextView, "Success", Snackbar.LENGTH_SHORT)
-                                .show();
+                        String value1 = message.getString("value");
+                        if (value1 == null) {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(mainActivity)
+                                    .setTitle("Error")
+                                    .setMessage("There was a problem writing the characteristic.")
+                                    .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                        }
+                                    });
+                            ;
+                            builder.show();
+                        } else {
+                            ((CharacteristicDetailFragment) active).updateValue(value1);
+                            View contextView = findViewById(R.id.main_container);
+                            Snackbar.make(contextView, "Success", Snackbar.LENGTH_SHORT)
+                                    .show();
+                        }
+
                         break;
                     case BLEManagementService.GET_LAST_STATE_RESULT:
                         String address = message.getString("address");
@@ -421,7 +491,21 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
                         transaction.addToBackStack(null);
                         active = newFragment;
                         currentDevice = newFragment;
-
+                        break;
+                    case BLEManagementService.DEVICE_CONNECTION_FAILED:
+                        AlertDialog.Builder builder = new AlertDialog.Builder(mainActivity)
+                                .setTitle("Connection failed")
+                                .setMessage("The connection with the BLE device failed.")
+                                .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        fm.beginTransaction().remove(active).show(fragment1).commit();
+                                        active = fragment1;
+                                        dialog.dismiss();
+                                    }
+                                });
+                        ;
+                        builder.show();
                 }
             }
         });

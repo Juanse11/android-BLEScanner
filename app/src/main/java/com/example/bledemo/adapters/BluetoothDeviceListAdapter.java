@@ -65,4 +65,10 @@ public class BluetoothDeviceListAdapter extends ArrayAdapter<ScanResult> {
         return rowView;
     }
 
+    public void refill(ArrayList<ScanResult> results){
+        scanResultList.clear();
+        scanResultList.addAll(results);
+        notifyDataSetChanged();
+    }
+
 }
