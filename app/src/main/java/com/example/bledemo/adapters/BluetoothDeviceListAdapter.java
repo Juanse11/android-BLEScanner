@@ -22,16 +22,17 @@ import com.example.bledemo.R;
 import com.example.bledemo.ble.BLEManager;
 import com.example.bledemo.fragments.OnDeviceSelectedInterface;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
 public class BluetoothDeviceListAdapter extends ArrayAdapter<ScanResult> {
     private final Context context;
     private MainActivity mainActivity;
-    private List<ScanResult> scanResultList;
+    private ArrayList<ScanResult> scanResultList;
     private OnDeviceSelectedInterface caller;
 
-    public BluetoothDeviceListAdapter(@NonNull Context context, List<ScanResult> scanResultList, MainActivity mainActivity, OnDeviceSelectedInterface caller) {
+    public BluetoothDeviceListAdapter(@NonNull Context context, ArrayList<ScanResult> scanResultList, MainActivity mainActivity, OnDeviceSelectedInterface caller) {
         super(context, R.layout.device_list_item, scanResultList);
         this.context = context;
         this.mainActivity = mainActivity;
@@ -51,12 +52,13 @@ public class BluetoothDeviceListAdapter extends ArrayAdapter<ScanResult> {
         final TextView deviceNameTxtView = (TextView) rowView.findViewById(R.id.device_list_item_text_view2);
         deviceNameTxtView.setText(deviceName);
 
-        txtTitle.setOnClickListener(new View.OnClickListener() {
+        txtTitle.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View view) {
+            public boolean onLongClick(View view) {
                 String address = ((TextView) view.findViewById(R.id.device_list_item_text_view)).getText() + "";
                 Toast.makeText(context, "selected address: " + address, Toast.LENGTH_LONG).show();
                 caller.onDeviceSelected(address, deviceNameTxtView.getText() + "");
+                return false;
             }
         });
 

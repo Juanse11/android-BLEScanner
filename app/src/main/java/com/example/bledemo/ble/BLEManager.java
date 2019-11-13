@@ -44,9 +44,9 @@ public class BLEManager extends ScanCallback {
     Queue<BluetoothGattCharacteristic> commandQueue = new LinkedList<>();
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
-    public List<ScanResult> scanResults = new ArrayList<>();
+    public ArrayList<ScanResult> scanResults = new ArrayList<>();
     static int REQUEST_BLUETOOTH_PERMISSION_NEEDED = 1001;
-    private BluetoothGatt lastBluetoothGatt;
+    public BluetoothGatt lastBluetoothGatt;
     UUID HEART_RATE_SERVICE_UUID;
     UUID HEART_RATE_MEASUREMENT_CHAR_UUID;
     UUID HEART_RATE_CONTROL_POINT_CHAR_UUID;
@@ -141,6 +141,7 @@ public class BLEManager extends ScanCallback {
 
     public void scanDevices() {
         try {
+            Log.d("lol", "lollololo");
             scanResults.clear();
             bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
             bluetoothLeScanner.startScan(this);
@@ -231,7 +232,8 @@ public class BLEManager extends ScanCallback {
     public boolean readCharacteristic(BluetoothGattCharacteristic characteristic) {
         try {
             if (characteristic == null) return false;
-            return lastBluetoothGatt.readCharacteristic(characteristic);
+            boolean a = lastBluetoothGatt.readCharacteristic(characteristic);
+            return a;
         } catch (Exception error) {
         }
         return false;
@@ -241,7 +243,8 @@ public class BLEManager extends ScanCallback {
         try {
             if (characteristic == null) return false;
             characteristic.setValue(data);
-            return lastBluetoothGatt.writeCharacteristic(characteristic);
+            boolean a = lastBluetoothGatt.writeCharacteristic(characteristic);
+            return a;
         } catch (Exception error) {
 
         }
@@ -309,7 +312,7 @@ public class BLEManager extends ScanCallback {
         currentCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
         BluetoothGattDescriptor descriptor = currentCharacteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID);
         if (descriptor != null) {
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            boolean a = descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             lastBluetoothGatt.writeDescriptor(descriptor);
         }
     }
@@ -349,9 +352,10 @@ public class BLEManager extends ScanCallback {
                     caller.connectionStatus("Setting characteristics up");
                     try {
                         searchAndSetAllNotifyAbleCharacteristics();
-                        caller.servicesDiscovered(lastBluetoothGatt);
+                        caller.servicesDiscovered((ArrayList<BluetoothGattService>) lastBluetoothGatt.getServices());
                         processCommand();
                     } catch (Exception error) {
+                        Log.d("ERROR", "ERROR");
                     }
                 }
 

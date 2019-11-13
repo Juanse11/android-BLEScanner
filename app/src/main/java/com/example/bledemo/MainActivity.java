@@ -6,14 +6,18 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
+import android.bluetooth.le.ScanResult;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import com.example.bledemo.adapters.BluetoothDeviceListAdapter;
+import com.example.bledemo.ble.BLEManagementService;
 import com.example.bledemo.ble.BLEManager;
 import com.example.bledemo.ble.BLEManagerCallerInterface;
+import com.example.bledemo.broadcast.BroadcastManager;
+import com.example.bledemo.broadcast.BroadcastManagerCallerInterface;
 import com.example.bledemo.fragments.CharacteristicDetailFragment;
 import com.example.bledemo.fragments.DeviceDetailFragment;
 import com.example.bledemo.fragments.HomeFragment;
@@ -28,10 +32,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.os.PersistableBundle;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -39,11 +45,15 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements BLEManagerCallerInterface, OnDeviceSelectedInterface, OnCharacteristicSelectedInterface {
+import static com.example.bledemo.ble.BLEManagementService.BLE_SERVICE_CHANNEL;
 
+public class MainActivity extends AppCompatActivity implements BLEManagerCallerInterface, OnDeviceSelectedInterface, OnCharacteristicSelectedInterface, BroadcastManagerCallerInterface {
+
+    BroadcastManager broadcastManager;
     public BLEManager bleManager;
     private MainActivity mainActivity;
     final Fragment fragment1 = new HomeFragment();
@@ -52,11 +62,17 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     Fragment active = fragment1;
     Fragment currentDevice;
     private BluetoothGatt lastBluetoothGatt;
+    private ArrayList<BluetoothGattService> bleServices;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
+        mainActivity = this;
+        initializeBroadcastManager();
+
+
         fm.beginTransaction().add(R.id.main_container, fragment1, "1").commit();
         fm.beginTransaction().add(R.id.main_container, fragment2, "log").hide(fragment2).commit();
         fm.executePendingTransactions();
@@ -65,12 +81,10 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             @Override
             public void onClick(View view) {
                 if (bleManager != null) {
-                    Log.d("VM", "scanning started");
-                    bleManager.scanDevices();
+                    broadcastManager.sendBroadcast(BLEManagementService.START_SCANNING, new Bundle());
                 }
             }
         });
-
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -108,7 +122,34 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             writeEntry("Bluetooth State: On");
             bleManager.requestLocationPermissions(this, 1002);
         }
-        mainActivity = this;
+
+        if (BLEManagementService.isServiceRunning) {
+            Bundle b = new Bundle();
+            broadcastManager.sendBroadcast(BLEManagementService.GET_LAST_STATE, b);
+
+        } else {
+            Intent serviceIntent = new Intent(this, BLEManagementService.class);
+            serviceIntent.setAction(BLEManagementService.ACTION_CONNECT);
+            serviceIntent.putExtra("inputExtra", "inputExtra");
+            ContextCompat.startForegroundService(this, serviceIntent);
+        }
+    }
+
+    public void initializeBroadcastManager() {
+        try {
+            if (broadcastManager == null) {
+                broadcastManager = new BroadcastManager(
+                        this,
+                        BLE_SERVICE_CHANNEL,
+                        this);
+            }
+        } catch (Exception error) {
+
+        }
+    }
+
+    public void restoreState(){
+
     }
 
     @Override
@@ -194,7 +235,6 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void scanStartedSuccessfully() {
-        writeEntry("Scanning devices...");
 
     }
 
@@ -210,111 +250,41 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
 
     @Override
     public void newDeviceDetected() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    writeEntry("New device detected nearby");
-                    ListView listView = (ListView) findViewById(R.id.devices_list_id);
-                    BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), bleManager.scanResults, mainActivity, mainActivity);
-                    listView.setAdapter(adapter);
-
-                } catch (Exception error) {
-
-                }
-
-            }
-        });
-
 
     }
 
     @Override
-    public void servicesDiscovered(final BluetoothGatt bg) {
-        this.lastBluetoothGatt = bg;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                writeEntry("Services discovered");
-                DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentByTag("device");
-                deviceDetailFragment.initListData(bg.getServices());
-            }
-        });
+    public void servicesDiscovered(final ArrayList<BluetoothGattService> bs) {
 
     }
 
     @Override
     public void characteristicChanged(final String bc, final BluetoothGattCharacteristic c) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if ((active instanceof CharacteristicDetailFragment) && active.getArguments().getString("charUUID").equals(c.getUuid().toString())) {
-                    ((CharacteristicDetailFragment) active).updateValue(bc);
-                }
-            }
-        });
+
     }
 
     @Override
     public void characteristicRead(final String bc, final BluetoothGattCharacteristic c) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ((CharacteristicDetailFragment) active).readValue(bc, c);
-            }
-        });
+
     }
 
     @Override
     public void characteristicWrite(final String bc, final BluetoothGattCharacteristic c) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                View contextView = findViewById(R.id.main_container);
 
-                Snackbar.make(contextView, "Success" ,Snackbar.LENGTH_SHORT)
-                        .show();
-            }
-        });
     }
 
     @Override
     public void connectionToBleFailed() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                fm.beginTransaction().remove(active).show(fragment1).commit();
-                active = fragment1;
-                fm.executePendingTransactions();
-                AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
-                alertDialog.setTitle("Error");
-                alertDialog.setMessage("There was a problem connecting with this device");
-                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                alertDialog.show();
-            }
-        });
+
     }
 
     @Override
     public void connectionToBleSuccesfully() {
-        writeEntry("BLE device connected successful");
     }
 
     @Override
     public void connectionStatus(final String status) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                writeEntry(status);
-                DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentByTag("device");
-                deviceDetailFragment.updateProgressBar(status);
-            }
-        });
+
     }
 
     public void writeEntry(final String log) {
@@ -358,7 +328,10 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     @Override
     public void connectToGatServer(String address) {
         writeEntry("Connecting to BLE device...");
-        bleManager.connectToGATTServer(bleManager.getByAddress(address));
+        Bundle b = new Bundle();
+        b.putString("deviceAddress", address);
+        broadcastManager.sendBroadcast(BLEManagementService.CONNECT_TO_GATT_SERVER, b);
+
     }
 
     @Override
@@ -368,8 +341,7 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
             public void run() {
                 Fragment newFragment = new CharacteristicDetailFragment();
                 Bundle args = new Bundle();
-                args.putString("charUUID", characteristic.getUuid().toString());
-                args.putString("servUUID", characteristic.getService().getUuid().toString());
+                args.putParcelable("characteristic", characteristic);
                 newFragment.setArguments(args);
                 FragmentTransaction transaction = fm.beginTransaction();
                 transaction.hide(active);
@@ -382,14 +354,93 @@ public class MainActivity extends AppCompatActivity implements BLEManagerCallerI
     }
 
     @Override
-    public void onValueSet(String value, String servUUID, String charUUID) {
-        bleManager.setValue(value, servUUID, charUUID);
+    public void onValueSet(String value, BluetoothGattCharacteristic c) {
+        Bundle b = new Bundle();
+        b.putString("charUUID", c.getUuid().toString());
+        b.putString("servUUID", c.getService().getUuid().toString());
+        b.putString("value", value);
+        broadcastManager.sendBroadcast(BLEManagementService.WRITE_CHARACTERISTIC, b);
     }
 
     @Override
-    public void getCharacteristic(String servUUID, String charUUID) {
-        bleManager.readCharacteristic(this.lastBluetoothGatt.getService(UUID.fromString(servUUID)).getCharacteristic(UUID.fromString(charUUID)));
+    public void getCharacteristic(BluetoothGattCharacteristic c) {
+        Bundle b = new Bundle();
+        b.putString("charUUID", c.getUuid().toString());
+        b.putString("servUUID", c.getService().getUuid().toString());
+        broadcastManager.sendBroadcast(BLEManagementService.READ_CHARACTERISTIC, b);
     }
 
 
+    @Override
+    public void MessageReceivedThroughBroadcastManager(final String channel, final String type, final Bundle message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                switch (type) {
+                    case BLEManagementService.NEW_DEVICE_DETECTED:
+                        writeEntry("New device detected nearby");
+                        ListView listView = (ListView) findViewById(R.id.devices_list_id);
+                        BluetoothDeviceListAdapter adapter = new BluetoothDeviceListAdapter(getApplicationContext(), message.<ScanResult>getParcelableArrayList("scanResults"), mainActivity, mainActivity);
+                        listView.setAdapter(adapter);
+                        break;
+                    case BLEManagementService.SERVICES_DISCOVERED:
+                        writeEntry("Services discovered");
+                        DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getSupportFragmentManager().findFragmentByTag("device");
+                        deviceDetailFragment.initListData(message.<BluetoothGattService>getParcelableArrayList("services"));
+                        break;
+                    case BLEManagementService.ON_READ_CHARACTERISTIC:
+                        ((CharacteristicDetailFragment) active).readValue(message.getString("value"), message.<BluetoothGattCharacteristic>getParcelable("characteristic"));
+                        break;
+                    case BLEManagementService.CHANGE_CHARACTERISTIC:
+                        BluetoothGattCharacteristic c = message.getParcelable("characteristic");
+                        String value = message.getString("value");
+                        if ((active instanceof CharacteristicDetailFragment) && active.getArguments().<BluetoothGattCharacteristic>getParcelable("characteristic").getUuid().toString().equals(c.getUuid().toString())) {
+                            ((CharacteristicDetailFragment) active).updateValue(value);
+                        }
+                        break;
+                    case BLEManagementService.ON_WRITE_CHARACTERISTIC:
+                        View contextView = findViewById(R.id.main_container);
+                        Snackbar.make(contextView, "Success", Snackbar.LENGTH_SHORT)
+                                .show();
+                        break;
+                    case BLEManagementService.GET_LAST_STATE_RESULT:
+                        String address = message.getString("address");
+                        String name = message.getString("name");
+                        ArrayList<BluetoothGattService> services = message.getParcelableArrayList("services");
+                        Fragment newFragment = new DeviceDetailFragment();
+                        Bundle args = new Bundle();
+                        args.putString("deviceAddress", address);
+                        args.putString("deviceName", name);
+
+                        newFragment.setArguments(args);
+
+                        FragmentTransaction transaction = fm.beginTransaction();
+                        transaction.hide(active);
+                        transaction.add(R.id.main_container, newFragment, "device");
+                        transaction.commit();
+                        transaction.addToBackStack(null);
+                        active = newFragment;
+                        currentDevice = newFragment;
+
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        broadcastManager.unRegister();
+        super.onDestroy();
+    }
+
+    @Override
+    public void ErrorAtBroadcastManager(Exception error) {
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle saveInstanceState) {
+        super.onSaveInstanceState(saveInstanceState);
+        saveInstanceState.putParcelableArrayList("scanResults", bleServices);
+    }
 }

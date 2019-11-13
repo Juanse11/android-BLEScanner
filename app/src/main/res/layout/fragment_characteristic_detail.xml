@@ -62,14 +62,51 @@
 
                 />
 
-            <TextView
-                android:id="@+id/properties_text_view"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.3"
-                android:text="no data yet"
-                android:textAlignment="textEnd"
-                android:textSize="16sp" />
+                android:layout_weight="0.5"
+                android:weightSum="3"
+                android:orientation="horizontal"
+                >
+
+                <TextView
+                    android:layout_weight="3"
+                    android:id="@+id/properties_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="no data yet"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp"/>
+                <TextView
+                    android:id="@+id/read_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="READ"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp"
+                    android:visibility="gone"
+                    />
+                <TextView
+                    android:layout_weight="1"
+                    android:id="@+id/write_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="WRITE"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp"
+                    android:visibility="gone"/>
+                <TextView
+                    android:visibility="gone"
+                    android:layout_weight="1"
+                    android:id="@+id/notify_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NOTIFY"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp" />
+            </LinearLayout>
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"

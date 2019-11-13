@@ -21,6 +21,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.bledemo.R;
+import com.example.bledemo.ble.BLEManager;
 
 import java.util.ArrayList;
 
@@ -29,8 +30,7 @@ import java.util.ArrayList;
  */
 public class CharacteristicDetailFragment extends Fragment {
 
-    String charUUID;
-    String servUUID;
+    BluetoothGattCharacteristic characteristic;
     OnCharacteristicSelectedInterface caller;
     ArrayList<String> listOfDescriptors = new ArrayList<>();
 
@@ -43,7 +43,6 @@ public class CharacteristicDetailFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
 
         return inflater.inflate(R.layout.fragment_characteristic_detail, container, false);
 
@@ -52,18 +51,20 @@ public class CharacteristicDetailFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, listOfDescriptors);
-        charUUID = getArguments().getString("charUUID");
-        servUUID = getArguments().getString("servUUID");
+        characteristic= getArguments().<BluetoothGattCharacteristic>getParcelable("characteristic");
+
         caller = (OnCharacteristicSelectedInterface) getContext();
-        caller.getCharacteristic(servUUID, charUUID);
+        caller.getCharacteristic(characteristic);
         ProgressBar progressBar = getView().findViewById(R.id.indeterminateCharacteristicBar);
         progressBar.setVisibility(View.VISIBLE);
         TextView statusTextView = getView().findViewById(R.id.characteristic_status_text_view);
         statusTextView.setVisibility(View.VISIBLE);
 
         TextView uuidTextView = getView().findViewById(R.id.uuid_text_view);
-        uuidTextView.setText(charUUID);
+        uuidTextView.setText(characteristic.getUuid().toString());
 
+        TextView propertiesTextView = getView().findViewById(R.id.properties_text_view);
+        propertiesTextView.setVisibility(View.GONE);
 
         final TextView valueTextview = getView().findViewById(R.id.value_text_view);
         valueTextview.setOnClickListener(new View.OnClickListener() {
@@ -74,17 +75,14 @@ public class CharacteristicDetailFragment extends Fragment {
                 edittext.setPadding(20,20,20,20);
                 alert.setMessage("The value must be in Hex format");
                 alert.setTitle("Set Value");
-
                 alert.setView(edittext);
-
                 alert.setPositiveButton("Set", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         String value = edittext.getText().toString();
                         valueTextview.setText(value);
-                        caller.onValueSet(value, servUUID, charUUID);
+                        caller.onValueSet(value, characteristic);
                     }
                 });
-
                 alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         dialog.cancel();
@@ -101,6 +99,17 @@ public class CharacteristicDetailFragment extends Fragment {
     }
 
     public void readValue(String value, BluetoothGattCharacteristic c){
+        boolean isReadable = BLEManager.isCharacteristicReadable(c);
+        boolean isWritable = BLEManager.isCharacteristicWriteable(c);
+        boolean isNotifiable = BLEManager.isCharacteristicNotifiable(c);
+
+        TextView textView1 = getView().findViewById(R.id.read_text_view);
+        textView1.setVisibility(isReadable ? View.VISIBLE : View.GONE);
+        TextView textView2 = getView().findViewById(R.id.write_text_view);
+        textView2.setVisibility(isWritable ? View.VISIBLE : View.GONE);
+        TextView textView3 = getView().findViewById(R.id.notify_text_view);
+        textView3.setVisibility(isNotifiable ? View.VISIBLE : View.GONE);
+
         final TextView valueTextview = getView().findViewById(R.id.value_text_view);
         valueTextview.setText(value);
 

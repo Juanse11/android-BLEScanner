@@ -11,6 +11,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
 import com.example.bledemo.R;
+import com.example.bledemo.ble.BLEManager;
 import com.example.bledemo.fragments.OnCharacteristicSelectedInterface;
 
 import java.util.HashMap;
@@ -50,11 +51,22 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
     public View getChildView(int groupPosition, final int childPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
         final BluetoothGattCharacteristic child = (BluetoothGattCharacteristic) getChild(groupPosition, childPosition);
+
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = layoutInflater.inflate(R.layout.service_list_item, null);
         }
+        boolean isReadable = BLEManager.isCharacteristicReadable(child);
+        boolean isWritable = BLEManager.isCharacteristicWriteable(child);
+        boolean isNotifiable = BLEManager.isCharacteristicNotifiable(child);
+
+        TextView textView1 = convertView.findViewById(R.id.characteristic_read_text_view);
+        textView1.setVisibility(isReadable ? View.VISIBLE : View.GONE);
+        TextView textView2 = convertView.findViewById(R.id.characteristic_write_text_view);
+        textView2.setVisibility(isWritable ? View.VISIBLE : View.GONE);
+        TextView textView3 = convertView.findViewById(R.id.characteristic_notify_text_view);
+        textView3.setVisibility(isNotifiable ? View.VISIBLE : View.GONE);
 
         TextView textViewChild = convertView
                 .findViewById(R.id.characteristic_list_item_text_view);

@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 
 import androidx.appcompat.app.AlertDialog;
 
@@ -52,14 +53,14 @@ public class BroadcastManager extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String payload=intent.getExtras().getString("payload");
+        Bundle payload=intent.getBundleExtra("payload");
         String type=intent.getExtras().getString("type");
         caller.
                 MessageReceivedThroughBroadcastManager(
                         this.channel,type,payload);
     }
 
-    public void sendBroadcast(String type,String message){
+    public void sendBroadcast(String type, Bundle message){
         try{
             Intent intentToBesent=new Intent();
             intentToBesent.setAction(channel);
@@ -70,6 +71,7 @@ public class BroadcastManager extends BroadcastReceiver {
             caller.ErrorAtBroadcastManager(error);
         }
     }
+
 
 
 
